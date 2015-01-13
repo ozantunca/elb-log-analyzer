@@ -1,0 +1,29 @@
+{
+  "name": "elb-log-analyzer",
+  "version": "0.1.0",
+  "description": "Log Analyzer for AWS Elastic Load Balancer",
+  "main": "index.js",
+  "author": "Ozan Tunca <ozan@ozantunca.org> (http://www.ozantunca.org/)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ozantunca/elb-log-analyzer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ozantunca/elb-log-analyzer/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/ozantunca/elb-log-analyzer/raw/master/LICENSE"
+    }
+  ],
+  "dependencies": {
+    "async": "^0.9.0",
+    "colors": "^1.0.3",
+    "glob": "^4.3.2",
+    "lodash": "^2.4.1",
+    "optimist": "^0.6.1"
+  },
+  "readmeFilename": "README.md",
+  "homepage": "https://github.com/ozantunca/DispatcherJS"
+}
