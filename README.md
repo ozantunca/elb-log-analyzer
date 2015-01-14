@@ -1,5 +1,5 @@
 # Log Analyzer for AWS Elastic Load Balancer
-ELB log analyzer is command line tool for parsing Elastic Load Balancer's access logs and getting quick statistics. Useful for detecting requests taking longest time, IP's making most requests and many other data that can be derived from log files.
+ELB log analyzer is a command line tool for parsing Elastic Load Balancer's access logs and getting quick statistics. Useful for detecting requests taking longest time, IPs making most requests and many other data that can be derived from log files.
 
 
 ## Installation
@@ -46,13 +46,19 @@ By default log analyzer will count all requests and sort them in descending orde
 9 - 341: http://onedio.com:80/fonts/font-awesome-4.0.3/fontawesome-webfont.woff?v=4.0.3
 10 - 327: http://www.onedio.com:80/favicon.ico
 ```
-Values in columns can be set to any of the values in logs files which can be seen here http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/access-log-collection.html#access-log-entry-format. There are total of 3 extra fields added to these which are `count`, `total_time` and `requested_resource`. When `count` is specified, it serves as a **groupBy** method that counts values in the other column and groups them together. Note that column1 is `count` by default. `total_time` is obtained by summing up `request_processing_time`, `backend_processing_time` and `response_processing_time`. `requested_resource` is a URL obtained by parsing `request` field. `requested_resource` is column2 by default.
+Values in columns can be set to any of the values in logs files which can be seen here http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/access-log-collection.html#access-log-entry-format. There are total of 3 extra fields added to these which are `count`, `total_time` and `requested_resource`. 
+
+When `count` is specified, it serves as a **groupBy** method that counts values in the other column and groups them together. Note that column1 is `count` by default. 
+
+`total_time` is obtained by summing up `request_processing_time`, `backend_processing_time` and `response_processing_time`. 
+
+`requested_resource` is a URL obtained by parsing `request` field. `requested_resource` is column2 by default.
 
 Columns can be changed like this:
 ```sh
 	elb-log-analyzer logs/ --col2=client:port
 ```
-We get client IPs that make requests the most. Example output:
+This command shows client IPs that make requests the most. Example output:
 ```
 1 - 258: 54.239.167.77:6176
 2 - 246: 54.239.167.77:48034
@@ -66,7 +72,7 @@ We get client IPs that make requests the most. Example output:
 10 - 220: 54.239.167.77:62824
 ```
 
-Another example: below code gets clients that make requests which takes the longest time in total.
+Another example command below gets clients that make requests which take the longest time in total.
 ```sh
 	elb-log-analyzer logs/ --col1=total_time --col2=client:port
 ```
