@@ -83,7 +83,8 @@ function processLogs(err, logs) {
     };
   }).value();
 
-  OUTPUT_LIMIT = argv.limit || (OUTPUT_LIMIT < logs.length ? OUTPUT_LIMIT : logs.length);
+  OUTPUT_LIMIT = argv.limit || OUTPUT_LIMIT;
+  OUTPUT_LIMIT = OUTPUT_LIMIT <= logs.length ? OUTPUT_LIMIT : logs.length;
 
   // return count
   if(col1 == 'count') {

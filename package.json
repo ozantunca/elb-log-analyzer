@@ -1,6 +1,6 @@
 {
   "name": "elb-log-analyzer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Log Analyzer for AWS Elastic Load Balancer",
   "main": "index.js",
   "author": "Ozan Tunca <ozan@ozantunca.org> (http://www.ozantunca.org/)",
