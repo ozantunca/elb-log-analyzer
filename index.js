@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 var fs = require('fs');
-var _ = require('lodash');
+var _ = require('underscore');
 var argv = require('optimist').argv;
 var async = require('async');
 var glob = require('glob');
