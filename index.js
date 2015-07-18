@@ -8,8 +8,13 @@ var fs = require('fs')
   , colors = require('colors/safe')
   , usefulColors = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
   , OUTPUT_LIMIT = 10
+  , VERSION = 'v0.2.0'
   , files = argv._;
 
+
+if (argv.version) {
+  return console.log(VERSION);
+}
 
 if (files == 0) {
   throw new Error('No argument or file specified');
