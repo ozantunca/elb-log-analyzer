@@ -12,7 +12,7 @@ var fs = require('fs')
   , files = argv._;
 
 
-if (argv.version) {
+if (argv.version || argv.v) {
   return console.log(VERSION);
 }
 
