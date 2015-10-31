@@ -6,7 +6,7 @@ ELB log analyzer is a command line tool for parsing Elastic Load Balancer's acce
 
 ## Installation
 ```sh
-	npm install -g elb-log-analyzer
+npm install -g elb-log-analyzer
 ```
 
 ## Usage
@@ -22,12 +22,12 @@ Assuming we have a directory structure like below...
 ```
 You can specify a log file to be analyzed like this:
 ```sh
-	elb-log-analyzer logs/access-log1.txt
+elb-log-analyzer logs/access-log1.txt
 ```
 or you can specify several of them:
 
 ```sh
-	elb-log-analyzer logs/access-log1.txt logs/access-log2.txt
+elb-log-analyzer logs/access-log1.txt logs/access-log2.txt
 ```
 or you can simply specify the **directory**:
 
@@ -58,7 +58,7 @@ When `count` is specified, it serves as a **groupBy** method that counts values 
 
 Columns can be changed like this:
 ```sh
-	elb-log-analyzer logs/ --col2=client:port
+elb-log-analyzer logs/ --col2=client:port
 ```
 This command shows client IPs that make requests the most. Example output:
 ```
@@ -76,7 +76,7 @@ This command shows client IPs that make requests the most. Example output:
 
 Another example command below gets clients that make requests which take the longest time in total.
 ```sh
-	elb-log-analyzer logs/ --col1=total_time --col2=client:port
+elb-log-analyzer logs/ --col1=total_time --col2=client:port
 ```
 Example output:
 ```
@@ -92,10 +92,29 @@ Example output:
 10 - 1.495889: 213.144.123.242:50561
 ```
 
+#### Adding More Columns
+Keep defining columns with `--col*` pattern such as `--col3`, `--col4`, `--col5`.
+```sh
+elb-log-analyzer logs/ --col1=count --col2=client:port --col3=elb_status_code
+```
+Example output:
+```
+1 - 188 - 54.239.167.83:11419 - 200
+2 - 180 - 54.239.167.83:3785 - 200
+3 - 174 - 54.239.167.83:25425 - 200
+4 - 151 - 54.239.167.83:7662 - 200
+5 - 142 - 54.239.167.83:47941 - 200
+6 - 128 - 54.239.167.83:3678 - 200
+7 - 121 - 54.239.167.83:43780 - 200
+8 - 121 - 54.239.167.83:26150 - 200
+9 - 94 - 54.239.167.83:53202 - 200
+10 - 94 - 176.41.174.153:59649 - 304
+```
+
 #### Prefixing
 A string can be provided to get values that starts with given string. This can be done using `--prefix1` and/or `--prefix2` options depending the column that needs to be queried. For example this feature can be used to get number of resources requested starting with certain URL. The command that performs this action would be similar to the one below:
 ```sh
-	elb-log-analyzer logs/ --col1=count --col2=requested_resource --prefix2=http://example.com:80/article
+elb-log-analyzer logs/ --col1=count --col2=requested_resource --prefix2=http://example.com:80/article
 ```
 Example output:
 
@@ -118,6 +137,12 @@ By default analyzer brings first 10 rows but this can be changed using `--limit`
 #### Ascending Order
 Analyzer's default behaviour is to bring results in descending order. If ascending order needed, you simply specify `-a` option.
 
-
-#LICENSE
-MIT
+#### Version
+`--version` or `-v` option returns the version of `elb-log-analyzer`.
+```sh
+elb-log-analyzer -v
+```
+Example Output:
+```
+v0.2.0
+```
