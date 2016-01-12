@@ -98,6 +98,12 @@ function processLogs(err, logs) {
   .compact()
   .map(function (line) { // Parse log lines for easy access
     var attributes = line.split(' ');
+    
+    var user_agent = '';
+    for(var i = 14; i < attributes.length - 2; i++) { 
+      user_agent = user_agent + attributes[i] + " "
+    }
+    
     return log = {
       'timestamp': attributes[0],
       'elb': attributes[1],
@@ -112,6 +118,7 @@ function processLogs(err, logs) {
       'sent_bytes': attributes[10],
       'request': attributes[11] +' '+ attributes[12] +' '+ attributes[13],
       'requested_resource': attributes[12],
+      'user_agent': user_agent,
       'total_time': parseFloat(attributes[4]) + parseFloat(attributes[5]) + parseFloat(attributes[6])
     };
   }).value();
