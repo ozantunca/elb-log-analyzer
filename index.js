@@ -1,14 +1,18 @@
 #! /usr/bin/env node
 
-var fs = require('fs')
+'use strict';
+
+const fs = require('fs')
+  , readline = require('readline')
   , _ = require('underscore')
-  , argv = require('optimist').argv
   , async = require('async')
   , glob = require('glob')
   , colors = require('colors/safe')
   , usefulColors = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
-  , OUTPUT_LIMIT = 10
   , VERSION = 'v0.2.0'
+
+let argv = require('optimist').argv
+  , OUTPUT_LIMIT = 10
   , files = argv._;
 
 
@@ -27,7 +31,7 @@ argv.sortBy = argv.sortBy || argv.s;
 
 // Parse prefixes and column choices
 _.each(argv, function (arg, key) {
-  var match = key.match(/^p(refix){0,1}([0-9]+)$/);
+  let match = key.match(/^p(refix){0,1}([0-9]+)$/);
 
   if (match) {
     argv.prefixes[match[2] - 1] = arg;
@@ -59,30 +63,56 @@ if (files.length == 1) {
     if (err) throw err;
     if (!results.singleFile.length) throw new Error('No file found.');
 
-    // assign files
-    files = results.singleFile;
-
-    // Loop through files
-    async.map(files, function (file, next) {
-
-      // Read file contents
-      fs.readFile(file, 'utf-8', function (err, data) {
-        if (err) return next(err);
-        next(null, data.split('\n'));
-      });
-    }, processLogs);
+    readFiles(results.singleFile);
   });
 }
 else {
+  readFiles(files);
+}
+
+function readFiles(files) {
   // Loop through files
+  let lines = [];
+
   async.map(files, function (file, next) {
+    const rl = readline.createInterface({
+      input: fs.createReadStream(file)
+    });
 
     // Read file contents
-    fs.readFile(file, 'utf-8', function (err, data) {
-      if (err) return next(err);
-      next(null, data.split('\n'));
+    rl.on('line', line => {
+      lines.push(processLine(line));
     });
-  }, processLogs);
+
+    rl.on('close', next);
+  }, err => processLogs(err, lines));
+}
+
+function processLine(line) {
+  let attributes = line.split(' ');
+  let user_agent = '';
+
+  for (let i = 14; i < attributes.length - 2; i++) {
+    user_agent = user_agent + attributes[i] + " ";
+  }
+
+  return {
+    'timestamp': attributes[0],
+    'elb': attributes[1],
+    'client:port': attributes[2],
+    'backend:port': attributes[3],
+    'request_processing_time': attributes[4],
+    'backend_processing_time': attributes[5],
+    'response_processing_time': attributes[6],
+    'elb_status_code': attributes[7],
+    'backend_status_code': attributes[8],
+    'received_bytes': attributes[9],
+    'sent_bytes': attributes[10],
+    'request': attributes[11] +' '+ attributes[12] +' '+ attributes[13],
+    'requested_resource': attributes[12],
+    'user_agent': user_agent,
+    'total_time': parseFloat(attributes[4]) + parseFloat(attributes[5]) + parseFloat(attributes[6])
+  };
 }
 
 
@@ -90,54 +120,21 @@ else {
 function processLogs(err, logs) {
   if (err) throw err;
 
-  // Split and parse lines
-  logs = _.chain(logs)
-  .reduce(function (allData, fileData) {
-    return allData.concat(fileData);
-  })
-  .compact()
-  .map(function (line) { // Parse log lines for easy access
-    var attributes = line.split(' ');
-    
-    var user_agent = '';
-    for(var i = 14; i < attributes.length - 2; i++) { 
-      user_agent = user_agent + attributes[i] + " "
-    }
-    
-    return log = {
-      'timestamp': attributes[0],
-      'elb': attributes[1],
-      'client:port': attributes[2],
-      'backend:port': attributes[3],
-      'request_processing_time': attributes[4],
-      'backend_processing_time': attributes[5],
-      'response_processing_time': attributes[6],
-      'elb_status_code': attributes[7],
-      'backend_status_code': attributes[8],
-      'received_bytes': attributes[9],
-      'sent_bytes': attributes[10],
-      'request': attributes[11] +' '+ attributes[12] +' '+ attributes[13],
-      'requested_resource': attributes[12],
-      'user_agent': user_agent,
-      'total_time': parseFloat(attributes[4]) + parseFloat(attributes[5]) + parseFloat(attributes[6])
-    };
-  }).value();
-
-  var countIndex = argv.cols.indexOf('count');
+  let countIndex = argv.cols.indexOf('count');
 
   // Return count
   if (countIndex > -1) {
-    var tempCols = argv.cols.slice(0);
+    let tempCols = argv.cols.slice(0);
 
     tempCols.splice(countIndex, 1);
 
-    var logs = _.chain(logs)
+    logs = _.chain(logs)
     .countBy(function (l) {
       return JSON.stringify(_.map(tempCols, function (c) { return l[c]; }));
     })
     .pairs()
     .map(function (l) {
-      var count = l[1];
+      let count = l[1];
       l = JSON.parse(l[0]);
       l.splice(countIndex, 0, count);
       return l;
@@ -152,8 +149,8 @@ function processLogs(err, logs) {
   }
   // Return custom column2
   else {
-    var tempCols = argv.cols.slice(0);
-    var logs = _.chain(logs)
+    let tempCols = argv.cols.slice(0);
+    let logs = _.chain(logs)
     .map(function (log) {
       return _.values(_.pick.apply(this, [log].concat(tempCols)));
     });
