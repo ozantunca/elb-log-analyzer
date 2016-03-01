@@ -32,7 +32,7 @@ elb-log-analyzer logs/access-log1.txt logs/access-log2.txt
 or you can simply specify the **directory**:
 
 ```sh
-	elb-log-analyzer logs/
+elb-log-analyzer logs/
 ```
 
 By default log analyzer will count all requests and sort them in descending order so that most requested URLs will be listed. This functionality can be changed  but this one was chosen as default behaviour since it appears to be the most common case. Example output:
@@ -111,6 +111,12 @@ Example output:
 10 - 94 - 176.41.174.153:59649 - 304
 ```
 
+#### SortBy
+You can select the column you want the results to be sorted by. Use `--sortBy` argument and specify the column number.
+```sh
+elb-log-analyzer logs/ --col1=count --col2=client:port --col3=elb_status_code --sortBy=2
+```
+
 #### Prefixing
 A string can be provided to get values that starts with given string. This can be done using `--prefix1` and/or `--prefix2` options depending the column that needs to be queried. For example this feature can be used to get number of resources requested starting with certain URL. The command that performs this action would be similar to the one below:
 ```sh
@@ -144,5 +150,5 @@ elb-log-analyzer -v
 ```
 Example Output:
 ```
-v0.2.0
+v0.3.0
 ```
