@@ -152,3 +152,7 @@ Example Output:
 ```
 v0.3.0
 ```
+
+#### Roadmap
+- Progress bar
+- Will be usable as a library in addition to CLI usage
