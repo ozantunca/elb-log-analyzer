@@ -171,7 +171,7 @@ function generateProcessor ({ cols, sortBy, ascending, limit }) {
   }
 }
 
-// Insertion sort
+// sort while inserting
 function splice (lines, newLine, sortBy) {
   let l = lines.length
     , compare;

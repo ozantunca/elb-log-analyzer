@@ -235,7 +235,7 @@ function generateProcessor(_ref2) {
   }
 }
 
-// Insertion sort
+// sort while inserting
 function splice(lines, newLine, sortBy) {
   var l = lines.length,
       compare = undefined;
