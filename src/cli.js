@@ -1,13 +1,15 @@
 #! /usr/bin/env node
-
 'use strict';
 
-import ela from './lib.js';
+import 'babel-polyfill';
+import lib   from './lib.js';
+import async from 'async';
+import _     from 'underscore';
+import glob  from 'glob';
+import colors from 'colors/safe'
 
-const async = require('async')
-  , _ = require('underscore')
-  , glob = require('glob')
-  , VERSION = 'v0.3.0';
+const VERSION = 'v0.3.0'
+  , USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
 
 let options = require('optimist').argv
   , files = options._;
@@ -20,11 +22,17 @@ if (options.version || options.v) {
 if (files == 0)
   throw new Error('No argument or file specified');
 
+options.sortBy = options.sortBy || options.s || 1;
+
+if (typeof options.sortBy !== 'number')
+  throw new Error('--sortBy must be a number');
+
 // Assign default columns
 options.cols = [ 'count', 'requested_resource' ];
 options.prefixes = [];
-options.sortBy = options.sortBy || options.s;
+options.sortBy = options.sortBy - 1; // lib.js accepts sortBy starting with 0 while cli accepts starting with 1
 options.limit = options.limit || 10;
+options.ascending = options.a;
 
 // Parse prefixes and column choices
 _.each(options, function (arg, key) {
@@ -65,9 +73,13 @@ if (files.length == 1) {
   });
 } else exec();
 
+
 function exec() {
-  ela({
-    files: files,
-    options: options
-  }).exec();
+  lib({ files: files, ...options })
+  .then(function (logs) {
+    _.each(logs, (log, i) => {
+      console.log(colors.white(i + 1) + ' - ' + _.map(log, (l, index) => colors[USEFUL_COLORS[index % USEFUL_COLORS.length]](l) ).join(colors.white(' - ')));
+    });
+  })
+  .catch(err => { throw err; });
 }

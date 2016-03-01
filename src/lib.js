@@ -1,162 +1,221 @@
-#! /usr/bin/env node
-
 'use strict';
 
-const fs = require('fs')
-  , readline = require('readline')
-  , _ = require('underscore')
-  , async = require('async')
-  , colors = require('colors/safe')
-  , usefulColors = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
+import fs       from 'fs';
+import readline from 'readline';
+import _        from 'underscore';
+import async    from 'async';
+import Promise  from 'bluebird';
 
+const FIELDS = ['timestamp', 'elb', 'client:port', 'backend:port', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count'];
 
-export default function ({ logs = [], files = [], options = {} }) {
-  const self = {
-    filter: function () {
-      if (!options.prefixes.length) return self;
+export default async function ({ logs = [], files = [], cols = ['count', 'requested_resource'], prefixes = [], sortBy = 0, limit = 10, ascending = false }) {
+  return new Promise((pass, fail) => {
+    // Fail when user requests a column that is not support by the analyzer
+    if (cols.some(c => !~FIELDS.indexOf(c)))
+      return fail('One or more of requested columns does not exist.');
 
-      _.filter(logs, log => {
-        // Prefixes are strings that queried resources starts with.
-        // For example, to find URL's starting with http://example.com
-        // argument should be --prefix1=http:/example.com
-        for (let i = 1; i < options.prefixes.length; i++) {
-          const p = options.prefixes[i];
-          if (!p) continue;
+    // Fail when user gives a sortBy value for a non-existent column
+    if (sortBy < 0 || sortBy > cols.length - 1)
+      return fail('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
 
-          if (String(log[i]).indexOf(p) != 0)
-            return false;
-        }
+    const PROCESSOR = generateProcessor({
+      cols: cols,
+      sortBy: sortBy,
+      limit: limit,
+      ascending: ascending
+    });
 
-        return true;
-      });
+    const FILTER = generateFilter(prefixes);
 
-      return self;
-    },
+    parseFiles(files, PROCESSOR.process.bind(PROCESSOR, FILTER))
+    .then(function () {
+      let logs = PROCESSOR.getResults();
 
-    process: function () {
-      const countIndex = options.cols.indexOf('count');
+      if (ascending)
+        logs = logs.slice(0, limit);
+      else
+        logs = logs.slice(logs.length - limit).reverse();
 
-      if (countIndex > -1) {
-        let tempCols = options.cols.slice(0);
-
-        tempCols.splice(countIndex, 1);
-
-        // Count all columns by grouping them
-        // Join columns to form an array, then JSON.stringify
-        // the array to form a unique string
-        logs = _.chain(logs)
-        .countBy(l => JSON.stringify(_.map(tempCols, c => l[c])))
-        .pairs()
-        // Place "count" column where it was intended
-        .map(function (l) {
-          let count = l[1];
-          l = JSON.parse(l[0]);
-          l.splice(countIndex, 0, count);
-          return l;
-        });
-      }
-      else {
-        const tempCols = options.cols.slice(0);
-        logs = _.chain(logs).map(log => _.values(_.pick.apply(this, [log].concat(tempCols))))
-      }
-
-      return self;
-    },
-
-    sort: function () {
-      logs = logs
-      .sortBy(options.sortBy ? options.sortBy - 1 : 0)
-      .value();
-      return self;
-    },
-
-    print: function () {
-      // Overwrite output limit according to --limit argument
-      options.limit = options.limit <= logs.length ? options.limit : logs.length;
-
-      // Output results
-      let i = 0, log;
-      // Ascending
-      if (options.a) {
-        while (i++ < options.limit) {
-          log = logs.shift();
-          // join columns by assigning colors
-          console.log(colors.white(i) + ' - ' + _.map(log, (l, index) => colors[usefulColors[index % usefulColors.length]](l) ).join(colors.white(' - ')));
-        }
-      }
-      // Descending
-      else {
-        while (i++ < options.limit) {
-          log = logs.pop();
-          // join columns by assigning colors
-          console.log(colors.white(i) + ' - ' + _.map(log, (l, index) => colors[usefulColors[index % usefulColors.length]](l) ).join(colors.white(' - ')));
-        }
-      }
-    },
-
-    exec: async function () {
-      return new Promise(async (pass, fail) => {
-        if (files.length) {
-          logs = logs.concat(await readFiles(files));
-        }
-
-        self.process().filter().sort().print();
-        pass();
-      });
-    }
-  };
-
-  return self;
+      pass(logs);
+    })
+    .catch(fail);
+  })
 }
 
-
-async function readFiles(files) {
+// Reads files line by line and passes them
+// to the processor function
+function parseFiles(files, processFunc) {
   return new Promise((pass, fail) => {
     // Loop through files
-    let lines = [];
-
     async.map(files, function (file, next) {
-      const rl = readline.createInterface({
+      const RL = readline.createInterface({
         input: fs.createReadStream(file)
       });
 
       // Read file contents
-      rl.on('line', line => {
-        lines.push(processLine(line));
+      RL.on('line', line => {
+        processFunc(line);
       });
 
-      rl.on('close', next);
+      RL.on('close', next);
 
     }, err => {
       if (err) return fail(err);
-      pass(lines);
+      pass();
     });
   });
 }
 
-function processLine(line) {
-  let attributes = line.split(' ');
+// Generates a filter function depending on prefixes
+function generateFilter (prefixes) {
+  if (prefixes.length === 0)
+    return null;
+
+  return line =>
+    _.every(prefixes, (p, i) =>
+      !p && p !== 0 || line[i] && line[i].toString().startsWith(p)
+    );
+}
+
+function generateProcessor ({ cols, sortBy, ascending, limit }) {
+  const COUNT_INDEX = cols.indexOf('count');
+
+  if (COUNT_INDEX > -1) {
+    let counts = {};
+    let tempCols = cols.slice(0);
+
+    tempCols.splice(COUNT_INDEX, 1);
+
+    return {
+      process: function (filterFunc, line) {
+        line = parseLine(line);
+        line = _.map(tempCols, c => line[c]);
+
+        // Drop the line if any of the columns requested does not exist in this line
+        if (line.some(c => !c && c !== 0))
+          return;
+
+        // Count column is not in 'line' at this moment
+        // so we are defining a new variable that includes it
+        let tempLine = line.slice();
+        if (filterFunc && COUNT_INDEX !== sortBy && !filterFunc(line.splice))
+          return;
+
+        // stringifying columns serves as a multi-column group_by
+        const LINESTRING = JSON.stringify(line);
+        counts[LINESTRING] = counts[LINESTRING] ? counts[LINESTRING] + 1 : 1;
+      },
+
+      getResults: function () {
+        let q = _.chain(counts)
+          .pairs()
+          .map(function (l) {
+            const COUNT = l[1];
+            l = JSON.parse(l[0]);
+            l.splice(COUNT_INDEX, 0, COUNT);
+            return l;
+          });
+
+        if (typeof filterFunc === 'function')
+          q = q.filter(filterFunc);
+
+        return q.sortBy(sortBy).value();
+      }
+    };
+  }
+  else {
+    const TEMP_COLS = cols.slice(0);
+    let outputLines = [];
+
+    return {
+      process: function (filterFunc, line) {
+        line = parseLine(line);
+        line = _.map(TEMP_COLS, c => line[c]);
+
+        // Drop the line if any of the columns requested does not exist in this line
+        if (line.some(c => !c && c !== 0))
+          return;
+
+        if (filterFunc && !filterFunc(line))
+          return;
+
+        const FIRSTLINE = _.first(outputLines);
+
+        // Add lines until the limit is reached
+        if (outputLines.length < limit) {
+          outputLines = splice( outputLines, line, sortBy );
+        }
+        // Drop lines immediately that are below the last item
+        // of currently sorted list. Otherwise add them and
+        // drop the last item.
+        else {
+          let compare;
+
+          if (typeof FIRSTLINE[sortBy] === 'number' && typeof line[sortBy] === 'number')
+            compare = FIRSTLINE[sortBy] < line[sortBy] ? -1 : 1;
+          else
+            compare = String(FIRSTLINE[sortBy]).localeCompare(line[sortBy]);
+
+          if (!ascending && compare === 1 || ascending && compare === -1)
+            return;
+
+          outputLines = splice( outputLines, line, sortBy );
+          outputLines.shift();
+        }
+      },
+
+      getResults: function () {
+        return outputLines;
+      }
+    }
+  }
+}
+
+// Insertion sort
+function splice (lines, newLine, sortBy) {
+  let l = lines.length
+    , compare;
+
+  while (l--) {
+    if (typeof lines[l][sortBy] === 'number' && typeof newLine[sortBy] === 'number')
+      compare = lines[l][sortBy] < newLine[sortBy] ? -1 : 1;
+    else
+      compare = String(lines[l][sortBy]).localeCompare(newLine[sortBy]);
+
+    if (compare < 0)
+      break;
+  }
+
+  lines.splice(l + 1, 0, newLine);
+  return lines;
+}
+
+// line parser function
+// @todo: will be customisable to be used for logs
+// other than ELB's
+function parseLine (line) {
+  const ATTRIBUTES = line.split(' ');
   let user_agent = '';
 
-  for (let i = 14; i < attributes.length - 2; i++) {
-    user_agent = user_agent + attributes[i] + " ";
+  for (let i = 14; i < ATTRIBUTES.length - 2; i++) {
+    user_agent = user_agent + ATTRIBUTES[i] + " ";
   }
 
   return {
-    'timestamp': attributes[0],
-    'elb': attributes[1],
-    'client:port': attributes[2],
-    'backend:port': attributes[3],
-    'request_processing_time': attributes[4],
-    'backend_processing_time': attributes[5],
-    'response_processing_time': attributes[6],
-    'elb_status_code': attributes[7],
-    'backend_status_code': attributes[8],
-    'received_bytes': attributes[9],
-    'sent_bytes': attributes[10],
-    'request': attributes[11] +' '+ attributes[12] +' '+ attributes[13],
-    'requested_resource': attributes[12],
+    'timestamp': ATTRIBUTES[0],
+    'elb': ATTRIBUTES[1],
+    'client:port': ATTRIBUTES[2],
+    'backend:port': ATTRIBUTES[3],
+    'request_processing_time': ATTRIBUTES[4],
+    'backend_processing_time': ATTRIBUTES[5],
+    'response_processing_time': ATTRIBUTES[6],
+    'elb_status_code': ATTRIBUTES[7],
+    'backend_status_code': ATTRIBUTES[8],
+    'received_bytes': ATTRIBUTES[9],
+    'sent_bytes': ATTRIBUTES[10],
+    'request': ATTRIBUTES[11] +' '+ ATTRIBUTES[12] +' '+ ATTRIBUTES[13],
+    'requested_resource': ATTRIBUTES[12],
     'user_agent': user_agent,
-    'total_time': parseFloat(attributes[4]) + parseFloat(attributes[5]) + parseFloat(attributes[6])
+    'total_time': parseFloat(ATTRIBUTES[4]) + parseFloat(ATTRIBUTES[5]) + parseFloat(ATTRIBUTES[6])
   };
 }

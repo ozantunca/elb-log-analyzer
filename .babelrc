@@ -1,4 +1,3 @@
 {
-    "presets": [ "es2015", "es2016-node5" ],
-    "plugins": [ "babel-plugin-transform-runtime" ]
+    "presets": [ "es2015", "es2016-node5", "stage-0" ]
 }
