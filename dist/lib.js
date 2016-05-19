@@ -61,19 +61,20 @@ exports.default = function () {
               // Fail when user gives a sortBy value for a non-existent column
               if (sortBy < 0 || sortBy > cols.length - 1) return fail('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
 
-              var PROCESSOR = generateProcessor({
+              var processor = generateProcessor({
                 cols: cols,
                 sortBy: sortBy,
                 limit: limit,
-                ascending: ascending
+                ascending: ascending,
+                prefixes: prefixes
               });
 
-              var FILTER = generateFilter(prefixes);
+              var filterFunc = generateFilter(prefixes.slice(), cols);
 
-              parseFiles(files, PROCESSOR.process.bind(PROCESSOR, FILTER)).then(function () {
-                var logs = PROCESSOR.getResults();
+              parseFiles(files, processor.process.bind(processor, filterFunc)).then(function () {
+                var logs = processor.getResults();
 
-                if (ascending) logs = logs.slice(0, limit);else logs = logs.slice(logs.length - limit).reverse();
+                if (ascending) logs = logs.slice(0, limit);else logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse();
 
                 pass(logs);
               }).catch(fail);
@@ -118,7 +119,13 @@ function parseFiles(files, processFunc) {
 }
 
 // Generates a filter function depending on prefixes
-function generateFilter(prefixes) {
+function generateFilter(prefixes, cols) {
+  var COUNT_INDEX = cols.indexOf('count');
+
+  if (COUNT_INDEX > -1) {
+    prefixes.splice(COUNT_INDEX, 1);
+  }
+
   if (prefixes.length === 0) return null;
 
   return function (line) {
@@ -133,6 +140,7 @@ function generateProcessor(_ref2) {
   var sortBy = _ref2.sortBy;
   var ascending = _ref2.ascending;
   var limit = _ref2.limit;
+  var prefixes = _ref2.prefixes;
 
   var COUNT_INDEX = cols.indexOf('count');
 
@@ -159,13 +167,12 @@ function generateProcessor(_ref2) {
             // Count column is not in 'line' at this moment
             // so we are defining a new variable that includes it
             var tempLine = line.slice();
-            if (filterFunc && COUNT_INDEX !== sortBy && !filterFunc(line.splice)) return;
+            if (filterFunc && !filterFunc(line)) return;
 
             // stringifying columns serves as a multi-column group_by
             var LINESTRING = JSON.stringify(line);
             counts[LINESTRING] = counts[LINESTRING] ? counts[LINESTRING] + 1 : 1;
           },
-
           getResults: function getResults() {
             var q = _underscore2.default.chain(counts).pairs().map(function (l) {
               var COUNT = l[1];
@@ -174,7 +181,11 @@ function generateProcessor(_ref2) {
               return l;
             });
 
-            if (typeof filterFunc === 'function') q = q.filter(filterFunc);
+            if (prefixes && prefixes[COUNT_INDEX]) {
+              q = q.filter(function (line) {
+                return line[COUNT_INDEX].toString().startsWith(prefixes[COUNT_INDEX]);
+              });
+            }
 
             return q.sortBy(sortBy).value();
           }
@@ -213,9 +224,13 @@ function generateProcessor(_ref2) {
             // of currently sorted list. Otherwise add them and
             // drop the last item.
             else {
-                var compare = undefined;
+                var compare = void 0;
 
-                if (typeof FIRSTLINE[sortBy] === 'number' && typeof line[sortBy] === 'number') compare = FIRSTLINE[sortBy] < line[sortBy] ? -1 : 1;else compare = String(FIRSTLINE[sortBy]).localeCompare(line[sortBy]);
+                if (typeof FIRSTLINE[sortBy] === 'number' && typeof line[sortBy] === 'number') {
+                  compare = FIRSTLINE[sortBy] < line[sortBy] ? -1 : 1;
+                } else {
+                  compare = String(FIRSTLINE[sortBy]).localeCompare(line[sortBy]);
+                }
 
                 if (!ascending && compare === 1 || ascending && compare === -1) return;
 
@@ -223,7 +238,6 @@ function generateProcessor(_ref2) {
                 outputLines.shift();
               }
           },
-
           getResults: function getResults() {
             return outputLines;
           }
@@ -238,7 +252,7 @@ function generateProcessor(_ref2) {
 // sort while inserting
 function splice(lines, newLine, sortBy) {
   var l = lines.length,
-      compare = undefined;
+      compare = void 0;
 
   while (l--) {
     if (typeof lines[l][sortBy] === 'number' && typeof newLine[sortBy] === 'number') compare = lines[l][sortBy] < newLine[sortBy] ? -1 : 1;else compare = String(lines[l][sortBy]).localeCompare(newLine[sortBy]);
@@ -275,7 +289,7 @@ function parseLine(line) {
     'sent_bytes': ATTRIBUTES[10],
     'request': ATTRIBUTES[11] + ' ' + ATTRIBUTES[12] + ' ' + ATTRIBUTES[13],
     'requested_resource': ATTRIBUTES[12],
-    'user_agent': user_agent,
+    user_agent: user_agent,
     'total_time': parseFloat(ATTRIBUTES[4]) + parseFloat(ATTRIBUTES[5]) + parseFloat(ATTRIBUTES[6])
   };
 }

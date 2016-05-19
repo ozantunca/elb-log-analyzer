@@ -43,7 +43,9 @@ if (files == 0) throw new Error('No argument or file specified');
 
 options.sortBy = options.sortBy || options.s || 1;
 
-if (typeof options.sortBy !== 'number') throw new Error('--sortBy must be a number');
+if (typeof options.sortBy !== 'number') {
+  throw new Error('--sortBy must be a number');
+}
 
 // Assign default columns
 options.cols = ['count', 'requested_resource'];
@@ -69,9 +71,11 @@ _underscore2.default.each(options, function (arg, key) {
 if (files.length == 1) {
   _async2.default.auto({
     // Check if the file is a directory
+
     directory: function directory(next) {
       (0, _glob2.default)(files[0] + '/*', next);
     },
+
 
     // If it's not directory, pass single file
     singleFile: ['directory', function (next, results) {
