@@ -18,23 +18,24 @@ export default async function ({ logs = [], files = [], cols = ['count', 'reques
     if (sortBy < 0 || sortBy > cols.length - 1)
       return fail('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
 
-    const PROCESSOR = generateProcessor({
-      cols: cols,
-      sortBy: sortBy,
-      limit: limit,
-      ascending: ascending
+    const processor = generateProcessor({
+      cols,
+      sortBy,
+      limit,
+      ascending,
+      prefixes,
     });
 
-    const FILTER = generateFilter(prefixes);
+    const filterFunc = generateFilter(prefixes.slice(), cols);
 
-    parseFiles(files, PROCESSOR.process.bind(PROCESSOR, FILTER))
+    parseFiles(files, processor.process.bind(processor, filterFunc))
     .then(function () {
-      let logs = PROCESSOR.getResults();
+      let logs = processor.getResults();
 
       if (ascending)
         logs = logs.slice(0, limit);
       else
-        logs = logs.slice(logs.length - limit).reverse();
+        logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse();
 
       pass(logs);
     })
@@ -67,9 +68,14 @@ function parseFiles(files, processFunc) {
 }
 
 // Generates a filter function depending on prefixes
-function generateFilter (prefixes) {
-  if (prefixes.length === 0)
-    return null;
+function generateFilter (prefixes, cols) {
+  const COUNT_INDEX = cols.indexOf('count');
+
+  if (COUNT_INDEX > -1) {
+    prefixes.splice(COUNT_INDEX, 1);
+  }
+
+  if (prefixes.length === 0) return null;
 
   return line =>
     _.every(prefixes, (p, i) =>
@@ -77,7 +83,7 @@ function generateFilter (prefixes) {
     );
 }
 
-function generateProcessor ({ cols, sortBy, ascending, limit }) {
+function generateProcessor ({ cols, sortBy, ascending, limit, prefixes }) {
   const COUNT_INDEX = cols.indexOf('count');
 
   if (COUNT_INDEX > -1) {
@@ -87,7 +93,7 @@ function generateProcessor ({ cols, sortBy, ascending, limit }) {
     tempCols.splice(COUNT_INDEX, 1);
 
     return {
-      process: function (filterFunc, line) {
+      process (filterFunc, line) {
         line = parseLine(line);
         line = _.map(tempCols, c => line[c]);
 
@@ -98,7 +104,7 @@ function generateProcessor ({ cols, sortBy, ascending, limit }) {
         // Count column is not in 'line' at this moment
         // so we are defining a new variable that includes it
         let tempLine = line.slice();
-        if (filterFunc && COUNT_INDEX !== sortBy && !filterFunc(line.splice))
+        if (filterFunc && !filterFunc(line))
           return;
 
         // stringifying columns serves as a multi-column group_by
@@ -106,7 +112,7 @@ function generateProcessor ({ cols, sortBy, ascending, limit }) {
         counts[LINESTRING] = counts[LINESTRING] ? counts[LINESTRING] + 1 : 1;
       },
 
-      getResults: function () {
+      getResults () {
         let q = _.chain(counts)
           .pairs()
           .map(function (l) {
@@ -116,8 +122,9 @@ function generateProcessor ({ cols, sortBy, ascending, limit }) {
             return l;
           });
 
-        if (typeof filterFunc === 'function')
-          q = q.filter(filterFunc);
+        if (prefixes && prefixes[COUNT_INDEX]) {
+          q = q.filter(line => line[COUNT_INDEX].toString().startsWith(prefixes[COUNT_INDEX]));
+        }
 
         return q.sortBy(sortBy).value();
       }
@@ -128,7 +135,7 @@ function generateProcessor ({ cols, sortBy, ascending, limit }) {
     let outputLines = [];
 
     return {
-      process: function (filterFunc, line) {
+      process (filterFunc, line) {
         line = parseLine(line);
         line = _.map(TEMP_COLS, c => line[c]);
 
@@ -151,10 +158,11 @@ function generateProcessor ({ cols, sortBy, ascending, limit }) {
         else {
           let compare;
 
-          if (typeof FIRSTLINE[sortBy] === 'number' && typeof line[sortBy] === 'number')
+          if (typeof FIRSTLINE[sortBy] === 'number' && typeof line[sortBy] === 'number') {
             compare = FIRSTLINE[sortBy] < line[sortBy] ? -1 : 1;
-          else
+          } else {
             compare = String(FIRSTLINE[sortBy]).localeCompare(line[sortBy]);
+          }
 
           if (!ascending && compare === 1 || ascending && compare === -1)
             return;
@@ -164,7 +172,7 @@ function generateProcessor ({ cols, sortBy, ascending, limit }) {
         }
       },
 
-      getResults: function () {
+      getResults () {
         return outputLines;
       }
     }
@@ -215,7 +223,7 @@ function parseLine (line) {
     'sent_bytes': ATTRIBUTES[10],
     'request': ATTRIBUTES[11] +' '+ ATTRIBUTES[12] +' '+ ATTRIBUTES[13],
     'requested_resource': ATTRIBUTES[12],
-    'user_agent': user_agent,
+    user_agent,
     'total_time': parseFloat(ATTRIBUTES[4]) + parseFloat(ATTRIBUTES[5]) + parseFloat(ATTRIBUTES[6])
   };
 }
