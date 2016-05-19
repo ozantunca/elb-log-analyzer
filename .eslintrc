@@ -1,0 +1,19 @@
+{
+  "plugins": [
+    "babel"
+  ],
+  "rules": {
+    "babel/generator-star-spacing": 1,
+    "babel/new-cap": 1,
+    "babel/array-bracket-spacing": 1,
+    "babel/object-shorthand": 1,
+    "babel/no-await-in-loop": 1
+  },
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true,
+      "modules": true
+    }
+  },
+  "parser": "babel-eslint"
+}
