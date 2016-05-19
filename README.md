@@ -1,5 +1,7 @@
 # Log Analyzer for AWS Elastic Load Balancer
-[![NPM Version](http://img.shields.io/npm/v/elb-log-analyzer.svg?style=flat)](https://www.npmjs.org/package/elb-log-analyzer)
+[![npm version](https://badge.fury.io/js/elb-log-analyzer.svg)](https://www.npmjs.org/elb-log-analyzer)
+[![Travis](https://travis-ci.org/ozantunca/elb-log-analyzer.svg?branch=master)](https://travis-ci.org/ozantunca/elb-log-analyzer)
+[![Snyk](https://snyk.io/test/npm/elb-log-analyzer/badge.svg)](https://snyk.io/test/npm/elb-log-analyzer)
 
 ELB log analyzer is a command line tool for parsing Elastic Load Balancer's access logs and getting quick statistics. Useful for detecting requests taking longest time, IPs making most requests and many other data that can be derived from log files. If you need help bulk downloading logs from your S3 bucket, try [elblogs](https://github.com/namirali/elblogs).
 
