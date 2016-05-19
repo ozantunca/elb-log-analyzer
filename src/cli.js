@@ -24,11 +24,12 @@ if (files == 0)
 
 options.sortBy = options.sortBy || options.s || 1;
 
-if (typeof options.sortBy !== 'number')
+if (typeof options.sortBy !== 'number') {
   throw new Error('--sortBy must be a number');
+}
 
 // Assign default columns
-options.cols = [ 'count', 'requested_resource' ];
+options.cols = ['count', 'requested_resource'];
 options.prefixes = [];
 options.sortBy = options.sortBy - 1; // lib.js accepts sortBy starting with 0 while cli accepts starting with 1
 options.limit = options.limit || 10;
@@ -53,7 +54,7 @@ _.each(options, function (arg, key) {
 if (files.length == 1) {
   async.auto({
     // Check if the file is a directory
-    directory: function (next) {
+    directory (next) {
       glob(files[0] + '/*', next);
     },
 
@@ -75,7 +76,7 @@ if (files.length == 1) {
 
 
 function exec() {
-  lib({ files: files, ...options })
+  lib({ files, ...options })
   .then(function (logs) {
     _.each(logs, (log, i) => {
       console.log(colors.white(i + 1) + ' - ' + _.map(log, (l, index) => colors[USEFUL_COLORS[index % USEFUL_COLORS.length]](l) ).join(colors.white(' - ')));
