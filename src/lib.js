@@ -6,7 +6,7 @@ import _        from 'underscore';
 import async    from 'async';
 import Promise  from 'bluebird';
 
-const FIELDS = ['timestamp', 'elb', 'client:port', 'backend:port', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count'];
+const FIELDS = ['timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count'];
 
 export default async function ({ logs = [], files = [], cols = ['count', 'requested_resource'], prefixes = [], sortBy = 0, limit = 10, ascending = false }) {
   return new Promise((pass, fail) => {
@@ -212,7 +212,9 @@ function parseLine (line) {
   return {
     'timestamp': ATTRIBUTES[0],
     'elb': ATTRIBUTES[1],
+    'client': String(ATTRIBUTES[2]).split(':')[0],
     'client:port': ATTRIBUTES[2],
+    'backend': String(ATTRIBUTES[3]).split(':')[0],
     'backend:port': ATTRIBUTES[3],
     'request_processing_time': ATTRIBUTES[4],
     'backend_processing_time': ATTRIBUTES[5],

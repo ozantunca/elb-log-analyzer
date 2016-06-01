@@ -1,6 +1,7 @@
 
 var assert = require('chai').assert;
 var exec = require('child_process').exec;
+var async = require('async');
 
 describe('elb-log-analyzer', function() {
   describe('basic', function () {
@@ -60,7 +61,26 @@ describe('elb-log-analyzer', function() {
       })
     })
 
-    it('more custom columns', function (done) {
+    it('custom column client and backend IPs w/o port', function (done) {
+      async.parallel([
+        async.apply(exec, 'node dist/cli.js logs/ --col2=client'),
+        async.apply(exec, 'node dist/cli.js logs/ --col2=backend'),
+      ], function (err, results) {
+        assert.isNull(err)
+
+        // stderr
+        assert.equal(results[0][1], '')
+        assert.equal(results[1][1], '')
+
+        // stdout
+        assert.equal(results[0][0], '1 - 84 - 216.137.60.6\n2 - 52 - 54.239.167.74\n3 - 40 - 216.137.58.48\n4 - 38 - 95.7.142.5\n5 - 36 - 77.92.102.34\n6 - 24 - 54.239.171.99\n7 - 24 - 205.251.252.16\n8 - 22 - 54.240.156.59\n9 - 22 - 88.246.209.164\n10 - 22 - 95.14.129.124\n')
+        assert.equal(results[1][0], '1 - 830 - 10.0.2.143\n2 - 506 - 10.0.0.215\n')
+
+        done()
+      })
+    })
+
+    it('multiple custom columns', function (done) {
       exec('node dist/cli.js logs/ --col1=total_time --col2=client:port', function (err, stdout) {
         assert.isNull(err)
         assert.equal(stdout, '1 - 2.094293 - 205.251.252.16:5173\n2 - 2.094293 - 205.251.252.16:5173\n3 - 1.423956 - 85.107.47.8:20755\n4 - 1.423956 - 85.107.47.8:20755\n5 - 1.272112 - 54.240.156.59:63875\n6 - 1.272112 - 54.240.156.59:63875\n7 - 1.2584359999999999 - 54.240.145.65:64483\n8 - 1.2584359999999999 - 54.240.145.65:64483\n9 - 1.2089199999999998 - 54.240.145.65:50260\n10 - 1.2089199999999998 - 54.240.145.65:50260\n')
@@ -68,7 +88,7 @@ describe('elb-log-analyzer', function() {
       })
     })
 
-    it('more custom columns with sortBy', function (done) {
+    it('multiple custom columns with sortBy', function (done) {
       exec('node dist/cli.js logs/ --col1=count --col2=client:port --col3=elb_status_code --sortBy=2', function (err, stdout) {
         assert.isNull(err)
         assert.equal(stdout, '1 - 2 - 95.9.8.42:49810 - 301\n2 - 2 - 95.70.131.112:38452 - 200\n3 - 2 - 95.7.60.91:38709 - 304\n4 - 2 - 95.7.142.5:1517 - 200\n5 - 2 - 95.7.142.5:1516 - 200\n6 - 2 - 95.7.142.5:1515 - 200\n7 - 2 - 95.7.142.5:1514 - 301\n8 - 2 - 95.7.142.5:1513 - 302\n9 - 2 - 95.7.142.5:1513 - 200\n10 - 2 - 95.7.142.5:1484 - 200\n')
