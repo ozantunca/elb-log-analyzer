@@ -6,7 +6,8 @@ import lib   from './lib.js';
 import async from 'async';
 import _     from 'underscore';
 import glob  from 'glob';
-import colors from 'colors/safe'
+import colors from 'colors/safe';
+import ProgressBar from 'progress';
 
 const VERSION = 'v1.0.0'
   , USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
@@ -104,7 +105,20 @@ if (files.length == 1) {
 
 
 function exec () {
-  lib({ files, ...options })
+  let bar = new ProgressBar(' processing [:bar] :percent :etas', {
+    complete: '=',
+    incomplete: ' ',
+    width: 30,
+    total: files.length,
+  });
+
+  lib({
+    files,
+    ...options,
+    progressFunc () {
+      bar.tick();
+    },
+  })
   .then(function (logs) {
     _.each(logs, (log, i) => {
       console.log(colors.white(i + 1) + ' - ' + _.map(log, (l, index) => colors[USEFUL_COLORS[index % USEFUL_COLORS.length]](l) ).join(colors.white(' - ')));

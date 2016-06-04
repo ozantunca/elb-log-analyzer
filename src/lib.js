@@ -10,7 +10,10 @@ const FIELDS = ['timestamp', 'elb', 'client:port', 'client', 'backend:port', 'ba
                 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code',
                 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count'];
 
-export default async function ({ logs = [], files = [], cols = ['count', 'requested_resource'], prefixes = [], sortBy = 0, limit = 10, ascending = false, start, end }) {
+export default async function ({
+  logs = [], files = [], cols = ['count', 'requested_resource'], prefixes = [],
+  sortBy = 0, limit = 10, ascending = false, start, end, progressFunc = () => {}
+}) {
   return new Promise((pass, fail) => {
     // Fail when user requests a column that is not support by the analyzer
     if (cols.some(c => !~FIELDS.indexOf(c))) {
@@ -34,14 +37,15 @@ export default async function ({ logs = [], files = [], cols = ['count', 'reques
 
     const filterFunc = generateFilter(prefixes.slice(), cols);
 
-    parseFiles(files, processor.process.bind(processor, filterFunc))
+    parseFiles(files, processor.process.bind(processor, filterFunc), progressFunc)
     .then(function () {
       let logs = processor.getResults();
 
-      if (ascending)
+      if (ascending) {
         logs = logs.slice(0, limit);
-      else
+      } else {
         logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse();
+      }
 
       pass(logs);
     })
@@ -51,7 +55,7 @@ export default async function ({ logs = [], files = [], cols = ['count', 'reques
 
 // Reads files line by line and passes them
 // to the processor function
-function parseFiles(files, processFunc) {
+function parseFiles(files, processFunc, progressFunc) {
   return new Promise((pass, fail) => {
     // Loop through files
     async.map(files, function (file, next) {
@@ -64,7 +68,10 @@ function parseFiles(files, processFunc) {
         processFunc(line);
       });
 
-      RL.on('close', next);
+      RL.on('close', () => {
+        progressFunc();
+        next();
+      });
 
     }, err => {
       if (err) return fail(err);

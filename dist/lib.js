@@ -50,6 +50,8 @@ exports.default = function () {
     var ascending = _ref$ascending === undefined ? false : _ref$ascending;
     var start = _ref.start;
     var end = _ref.end;
+    var _ref$progressFunc = _ref.progressFunc;
+    var progressFunc = _ref$progressFunc === undefined ? function () {} : _ref$progressFunc;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -79,10 +81,14 @@ exports.default = function () {
 
               var filterFunc = generateFilter(prefixes.slice(), cols);
 
-              parseFiles(files, processor.process.bind(processor, filterFunc)).then(function () {
+              parseFiles(files, processor.process.bind(processor, filterFunc), progressFunc).then(function () {
                 var logs = processor.getResults();
 
-                if (ascending) logs = logs.slice(0, limit);else logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse();
+                if (ascending) {
+                  logs = logs.slice(0, limit);
+                } else {
+                  logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse();
+                }
 
                 pass(logs);
               }).catch(fail);
@@ -105,7 +111,7 @@ exports.default = function () {
 // to the processor function
 
 
-function parseFiles(files, processFunc) {
+function parseFiles(files, processFunc, progressFunc) {
   return new _bluebird2.default(function (pass, fail) {
     // Loop through files
     _async2.default.map(files, function (file, next) {
@@ -118,7 +124,10 @@ function parseFiles(files, processFunc) {
         processFunc(line);
       });
 
-      RL.on('close', next);
+      RL.on('close', function () {
+        progressFunc();
+        next();
+      });
     }, function (err) {
       if (err) return fail(err);
       pass();

@@ -26,6 +26,10 @@ var _safe = require('colors/safe');
 
 var _safe2 = _interopRequireDefault(_safe);
 
+var _progress = require('progress');
+
+var _progress2 = _interopRequireDefault(_progress);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var VERSION = 'v1.0.0',
@@ -125,7 +129,20 @@ if (files.length == 1) {
 } else exec();
 
 function exec() {
-  (0, _lib2.default)(_extends({ files: files }, options)).then(function (logs) {
+  var bar = new _progress2.default(' processing [:bar] :percent :etas', {
+    complete: '=',
+    incomplete: ' ',
+    width: 30,
+    total: files.length
+  });
+
+  (0, _lib2.default)(_extends({
+    files: files
+  }, options, {
+    progressFunc: function progressFunc() {
+      bar.tick();
+    }
+  })).then(function (logs) {
     _underscore2.default.each(logs, function (log, i) {
       console.log(_safe2.default.white(i + 1) + ' - ' + _underscore2.default.map(log, function (l, index) {
         return _safe2.default[USEFUL_COLORS[index % USEFUL_COLORS.length]](l);
