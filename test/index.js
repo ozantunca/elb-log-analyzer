@@ -151,5 +151,21 @@ describe('elb-log-analyzer', function() {
         done()
       })
     })
+
+    it('filtering by date', function (done) {
+      exec('node dist/cli.js logs/ --start=2015-11-07T18:45:34.501734Z --end=2015-11-07T18:45:34.768481Z', function (err, stdout) {
+        assert.isNull(err)
+        assert.equal(stdout, '1 - 4 - http://example.com:80/images/logo/example-o-logo.png\n2 - 4 - http://example.com:80/images/logo/google-play.png\n3 - 4 - http://example.com:80/images/icon/collapse.png\n4 - 4 - http://example.com:80/images/logo/app-store.png\n5 - 4 - http://example.com:80/images/logo/devices.png\n6 - 4 - http://example.com:80/img/user/000000000000000000000000\n7 - 4 - http://example.com:80/favicon.ico\n8 - 2 - http://cf-source.example.com:80/img/719/bound/2r0/54b7cc86d22d31bf16a10f86.webp\n9 - 2 - http://cf-source.example.com:80/img/600/300/2r0/502a456a2ab3d1d03300af9a.jpg\n10 - 2 - http://cf-source.example.com:80/img/600/300/2r0/55f94dedf5ef747e16a4a640.jpg\n')
+        done()
+      })
+    })
+
+    it('filtering by date 2', function (done) {
+      exec('node dist/cli.js logs/ --end=2015-11-07T18:45:35.368553Z', function (err, stdout) {
+        assert.isNull(err)
+        assert.equal(stdout, '1 - 30 - http://example.com:80/?mode=json&after=&iteration=1\n2 - 30 - http://example.com:80/img/user/000000000000000000000000\n3 - 22 - http://example.com:80/images/trans.png\n4 - 20 - http://example.com:80/images/icon/collapse.png\n5 - 18 - http://www.example.com:80/favicon.ico\n6 - 18 - http://example.com:80/\n7 - 16 - http://example.com:80/images/logo/app-store.png\n8 - 16 - http://example.com:80/favicons/favicon-32x32.png\n9 - 16 - http://example.com:80/stylesheets/external/font-awesome.css\n10 - 16 - http://example.com:80/images/logo/devices.png\n')
+        done()
+      })
+    })
   });
 });

@@ -30,7 +30,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new _bluebird2.default(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return _bluebird2.default.resolve(value).then(function (value) { return step("next", value); }, function (err) { return step("throw", err); }); } } return step("next"); }); }; }
 
-var FIELDS = ['timestamp', 'elb', 'client:port', 'backend:port', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count'];
+var FIELDS = ['timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count'];
 
 exports.default = function () {
   var ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee(_ref) {
@@ -48,6 +48,8 @@ exports.default = function () {
     var limit = _ref$limit === undefined ? 10 : _ref$limit;
     var _ref$ascending = _ref.ascending;
     var ascending = _ref$ascending === undefined ? false : _ref$ascending;
+    var start = _ref.start;
+    var end = _ref.end;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -56,17 +58,23 @@ exports.default = function () {
               // Fail when user requests a column that is not support by the analyzer
               if (cols.some(function (c) {
                 return ! ~FIELDS.indexOf(c);
-              })) return fail('One or more of requested columns does not exist.');
+              })) {
+                return fail('One or more of the requested columns does not exist.');
+              }
 
               // Fail when user gives a sortBy value for a non-existent column
-              if (sortBy < 0 || sortBy > cols.length - 1) return fail('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
+              if (sortBy < 0 || sortBy > cols.length - 1) {
+                return fail('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
+              }
 
               var processor = generateProcessor({
                 cols: cols,
                 sortBy: sortBy,
                 limit: limit,
                 ascending: ascending,
-                prefixes: prefixes
+                prefixes: prefixes,
+                start: start,
+                end: end
               });
 
               var filterFunc = generateFilter(prefixes.slice(), cols);
@@ -130,8 +138,11 @@ function generateFilter(prefixes, cols) {
 
   return function (line) {
     return _underscore2.default.every(prefixes, function (p, i) {
-      return !p && p !== 0 || line[i] && line[i].toString().startsWith(p);
-    });
+      return !p && p !== 0 || // no prefix for this index
+      line[i] && // line has value in that index
+      line[i].toString().startsWith(p);
+    } // line startsWith given prefix
+    );
   };
 }
 
@@ -141,6 +152,8 @@ function generateProcessor(_ref2) {
   var ascending = _ref2.ascending;
   var limit = _ref2.limit;
   var prefixes = _ref2.prefixes;
+  var start = _ref2.start;
+  var end = _ref2.end;
 
   var COUNT_INDEX = cols.indexOf('count');
 
@@ -155,6 +168,10 @@ function generateProcessor(_ref2) {
         v: {
           process: function process(filterFunc, line) {
             line = parseLine(line);
+
+            // filter lines by date if requested
+            if ((start || end) && filterByDate(line, start, end)) return;
+
             line = _underscore2.default.map(tempCols, function (c) {
               return line[c];
             });
@@ -166,7 +183,6 @@ function generateProcessor(_ref2) {
 
             // Count column is not in 'line' at this moment
             // so we are defining a new variable that includes it
-            var tempLine = line.slice();
             if (filterFunc && !filterFunc(line)) return;
 
             // stringifying columns serves as a multi-column group_by
@@ -203,6 +219,10 @@ function generateProcessor(_ref2) {
         v: {
           process: function process(filterFunc, line) {
             line = parseLine(line);
+
+            // filter lines by date if requested
+            if ((start || end) && filterByDate(line, start, end)) return;
+
             line = _underscore2.default.map(TEMP_COLS, function (c) {
               return line[c];
             });
@@ -255,7 +275,11 @@ function splice(lines, newLine, sortBy) {
       compare = void 0;
 
   while (l--) {
-    if (typeof lines[l][sortBy] === 'number' && typeof newLine[sortBy] === 'number') compare = lines[l][sortBy] < newLine[sortBy] ? -1 : 1;else compare = String(lines[l][sortBy]).localeCompare(newLine[sortBy]);
+    if (typeof lines[l][sortBy] === 'number' && typeof newLine[sortBy] === 'number') {
+      compare = lines[l][sortBy] < newLine[sortBy] ? -1 : 1;
+    } else {
+      compare = String(lines[l][sortBy]).localeCompare(newLine[sortBy]);
+    }
 
     if (compare < 0) break;
   }
@@ -278,7 +302,9 @@ function parseLine(line) {
   return {
     'timestamp': ATTRIBUTES[0],
     'elb': ATTRIBUTES[1],
+    'client': String(ATTRIBUTES[2]).split(':')[0],
     'client:port': ATTRIBUTES[2],
+    'backend': String(ATTRIBUTES[3]).split(':')[0],
     'backend:port': ATTRIBUTES[3],
     'request_processing_time': ATTRIBUTES[4],
     'backend_processing_time': ATTRIBUTES[5],
@@ -292,4 +318,18 @@ function parseLine(line) {
     user_agent: user_agent,
     'total_time': parseFloat(ATTRIBUTES[4]) + parseFloat(ATTRIBUTES[5]) + parseFloat(ATTRIBUTES[6])
   };
+}
+
+function filterByDate(line, start, end) {
+  var timestamp = new Date(line.timestamp).getTime();
+
+  if (start && start.getTime() > timestamp) {
+    return true;
+  }
+
+  if (end && end.getTime() < timestamp) {
+    return true;
+  }
+
+  return false;
 }

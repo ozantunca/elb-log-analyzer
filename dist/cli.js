@@ -28,7 +28,7 @@ var _safe2 = _interopRequireDefault(_safe);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var VERSION = 'v0.3.0',
+var VERSION = 'v1.0.0',
     USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan'];
 
 var options = require('optimist').argv,
@@ -39,12 +39,38 @@ if (options.version || options.v) {
   process.exit();
 }
 
-if (files == 0) throw new Error('No argument or file specified');
+if (files == 0) {
+  handler(new Error('No argument or file specified'));
+  process.exit();
+}
+
+if (options.start) {
+  options.start = String(options.start);
+
+  if (new Date(options.start).toString() === 'Invalid Date') {
+    handler(new Error('Start date is invalid'));
+    process.exit();
+  } else {
+    options.start = new Date(options.start);
+  }
+}
+
+if (options.end) {
+  options.end = String(options.end);
+
+  if (new Date(options.end).toString() === 'Invalid Date') {
+    handler(new Error('End date is invalid'));
+    process.exit();
+  } else {
+    options.end = new Date(options.end);
+  }
+}
 
 options.sortBy = options.sortBy || options.s || 1;
 
 if (typeof options.sortBy !== 'number') {
-  throw new Error('--sortBy must be a number');
+  handler(new Error('--sortBy must be a number'));
+  process.exit();
 }
 
 // Assign default columns
@@ -58,11 +84,15 @@ options.ascending = options.a;
 _underscore2.default.each(options, function (arg, key) {
   var match = key.match(/^p(refix){0,1}([0-9]+)$/);
 
-  if (match) return options.prefixes[match[2] - 1] = arg;
+  if (match) {
+    return options.prefixes[match[2] - 1] = arg;
+  }
 
   match = key.match(/^c(ol){0,1}([0-9]+)$/);
 
-  if (match) options.cols[match[2] - 1] = arg;
+  if (match) {
+    options.cols[match[2] - 1] = arg;
+  }
 });
 
 // If files array consists of only one value it could
@@ -79,13 +109,15 @@ if (files.length == 1) {
 
     // If it's not directory, pass single file
     singleFile: ['directory', function (next, results) {
-      if (results.directory && !!results.directory.length) return next(null, results.directory);
+      if (results.directory && !!results.directory.length) {
+        return next(null, results.directory);
+      }
 
       (0, _glob2.default)(files[0], next);
     }]
   }, function (err, results) {
-    if (err) throw err;
-    if (!results.singleFile.length) throw new Error('No file found.');
+    if (err) return handler(err);
+    if (!results.singleFile.length) return handler(new Error('No file found.'));
 
     files = results.singleFile;
     exec();
@@ -99,7 +131,9 @@ function exec() {
         return _safe2.default[USEFUL_COLORS[index % USEFUL_COLORS.length]](l);
       }).join(_safe2.default.white(' - ')));
     });
-  }).catch(function (err) {
-    throw err;
-  });
+  }).catch(handler);
+}
+
+function handler(err) {
+  console.log(_safe2.default.red('An error occured') + ': ', _safe2.default.cyan(err));
 }

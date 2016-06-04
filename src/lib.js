@@ -6,17 +6,21 @@ import _        from 'underscore';
 import async    from 'async';
 import Promise  from 'bluebird';
 
-const FIELDS = ['timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count'];
+const FIELDS = ['timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time',
+                'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code',
+                'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count'];
 
-export default async function ({ logs = [], files = [], cols = ['count', 'requested_resource'], prefixes = [], sortBy = 0, limit = 10, ascending = false }) {
+export default async function ({ logs = [], files = [], cols = ['count', 'requested_resource'], prefixes = [], sortBy = 0, limit = 10, ascending = false, start, end }) {
   return new Promise((pass, fail) => {
     // Fail when user requests a column that is not support by the analyzer
-    if (cols.some(c => !~FIELDS.indexOf(c)))
-      return fail('One or more of requested columns does not exist.');
+    if (cols.some(c => !~FIELDS.indexOf(c))) {
+      return fail('One or more of the requested columns does not exist.');
+    }
 
     // Fail when user gives a sortBy value for a non-existent column
-    if (sortBy < 0 || sortBy > cols.length - 1)
+    if (sortBy < 0 || sortBy > cols.length - 1) {
       return fail('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
+    }
 
     const processor = generateProcessor({
       cols,
@@ -24,6 +28,8 @@ export default async function ({ logs = [], files = [], cols = ['count', 'reques
       limit,
       ascending,
       prefixes,
+      start,
+      end,
     });
 
     const filterFunc = generateFilter(prefixes.slice(), cols);
@@ -79,11 +85,13 @@ function generateFilter (prefixes, cols) {
 
   return line =>
     _.every(prefixes, (p, i) =>
-      !p && p !== 0 || line[i] && line[i].toString().startsWith(p)
+      !p && p !== 0 || // no prefix for this index
+      line[i] && // line has value in that index
+      line[i].toString().startsWith(p) // line startsWith given prefix
     );
 }
 
-function generateProcessor ({ cols, sortBy, ascending, limit, prefixes }) {
+function generateProcessor ({ cols, sortBy, ascending, limit, prefixes, start, end }) {
   const COUNT_INDEX = cols.indexOf('count');
 
   if (COUNT_INDEX > -1) {
@@ -95,6 +103,11 @@ function generateProcessor ({ cols, sortBy, ascending, limit, prefixes }) {
     return {
       process (filterFunc, line) {
         line = parseLine(line);
+
+        // filter lines by date if requested
+        if ((start || end) && filterByDate(line, start, end))
+          return;
+
         line = _.map(tempCols, c => line[c]);
 
         // Drop the line if any of the columns requested does not exist in this line
@@ -103,7 +116,6 @@ function generateProcessor ({ cols, sortBy, ascending, limit, prefixes }) {
 
         // Count column is not in 'line' at this moment
         // so we are defining a new variable that includes it
-        let tempLine = line.slice();
         if (filterFunc && !filterFunc(line))
           return;
 
@@ -137,6 +149,11 @@ function generateProcessor ({ cols, sortBy, ascending, limit, prefixes }) {
     return {
       process (filterFunc, line) {
         line = parseLine(line);
+
+        // filter lines by date if requested
+        if ((start || end) && filterByDate(line, start, end))
+          return;
+
         line = _.map(TEMP_COLS, c => line[c]);
 
         // Drop the line if any of the columns requested does not exist in this line
@@ -185,10 +202,11 @@ function splice (lines, newLine, sortBy) {
     , compare;
 
   while (l--) {
-    if (typeof lines[l][sortBy] === 'number' && typeof newLine[sortBy] === 'number')
+    if (typeof lines[l][sortBy] === 'number' && typeof newLine[sortBy] === 'number') {
       compare = lines[l][sortBy] < newLine[sortBy] ? -1 : 1;
-    else
+    } else {
       compare = String(lines[l][sortBy]).localeCompare(newLine[sortBy]);
+    }
 
     if (compare < 0)
       break;
@@ -228,4 +246,18 @@ function parseLine (line) {
     user_agent,
     'total_time': parseFloat(ATTRIBUTES[4]) + parseFloat(ATTRIBUTES[5]) + parseFloat(ATTRIBUTES[6])
   };
+}
+
+function filterByDate (line, start, end) {
+  const timestamp = (new Date(line.timestamp)).getTime();
+
+  if (start && start.getTime() > timestamp) {
+    return true;
+  }
+
+  if (end && end.getTime() < timestamp) {
+    return true;
+  }
+
+  return false;
 }
