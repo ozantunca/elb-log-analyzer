@@ -1,5 +1,6 @@
 'use strict';
 
+import 'babel-polyfill';
 import fs       from 'fs';
 import readline from 'readline';
 import _        from 'underscore';
