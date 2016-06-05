@@ -2,9 +2,10 @@
 var assert = require('chai').assert;
 var exec = require('child_process').exec;
 var async = require('async');
+var analyzer = require('../')
 
 describe('elb-log-analyzer', function() {
-  describe('basic', function () {
+  describe('cli mode', function () {
     it('should analyze directory', function (done) {
       exec('node dist/cli.js logs', function (err, stdout) {
         assert.isNull(err)
@@ -22,7 +23,7 @@ describe('elb-log-analyzer', function() {
     })
 
     it('should analyze multiple files', function (done) {
-      exec('node dist/cli.js logs/AWSLogs.log logs/AWSLogs2.log', function (err, stdout) {
+      exec('node dist/cli.js logs/AWSLogs.log logs/inner-logs/AWSLogs2.log', function (err, stdout) {
         assert.isNull(err)
         assert.equal(stdout, '\n1 - 66 - http://example.com:80/images/trans.png\n2 - 66 - http://example.com:80/?mode=json&after=&iteration=1\n3 - 58 - http://example.com:80/img/user/000000000000000000000000\n4 - 54 - http://www.example.com:80/favicon.ico\n5 - 46 - http://example.com:80/favicons/favicon-32x32.png\n6 - 38 - http://example.com:80/favicons/favicon-16x16.png\n7 - 32 - http://example.com:80/images/logo/devices.png\n8 - 30 - http://example.com:80/images/icon/collapse.png\n9 - 30 - http://example.com:80/\n10 - 30 - http://example.com:80/images/logo/google-play.png\n')
         done()
@@ -168,4 +169,583 @@ describe('elb-log-analyzer', function() {
       })
     })
   });
+
+  describe('library mode', function () {
+    it('should analyze directory', function (done) {
+      var result = [ [ 66, 'http://example.com:80/images/trans.png' ],
+        [ 66, 'http://example.com:80/?mode=json&after=&iteration=1' ],
+        [ 58,
+          'http://example.com:80/img/user/000000000000000000000000' ],
+        [ 54, 'http://www.example.com:80/favicon.ico' ],
+        [ 46, 'http://example.com:80/favicons/favicon-32x32.png' ],
+        [ 38, 'http://example.com:80/favicons/favicon-16x16.png' ],
+        [ 32, 'http://example.com:80/images/logo/devices.png' ],
+        [ 30, 'http://example.com:80/images/icon/collapse.png' ],
+        [ 30, 'http://example.com:80/' ],
+        [ 30, 'http://example.com:80/images/logo/google-play.png' ] ]
+
+      analyzer({
+        files: ['./logs']
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('should analyze a file', function (done) {
+      var result = [ [ 33, 'http://example.com:80/images/trans.png' ],
+        [ 33, 'http://example.com:80/?mode=json&after=&iteration=1' ],
+        [ 29,
+          'http://example.com:80/img/user/000000000000000000000000' ],
+        [ 27, 'http://www.example.com:80/favicon.ico' ],
+        [ 23, 'http://example.com:80/favicons/favicon-32x32.png' ],
+        [ 19, 'http://example.com:80/favicons/favicon-16x16.png' ],
+        [ 16, 'http://example.com:80/images/logo/devices.png' ],
+        [ 15, 'http://example.com:80/images/icon/collapse.png' ],
+        [ 15, 'http://example.com:80/' ],
+        [ 15, 'http://example.com:80/images/logo/google-play.png' ] ]
+
+      analyzer({
+        files: ['./logs/AWSLogs.log']
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('should analyze multiple files', function (done) {
+      var result = [ [ 66, 'http://example.com:80/images/trans.png' ],
+        [ 66, 'http://example.com:80/?mode=json&after=&iteration=1' ],
+        [ 58,
+          'http://example.com:80/img/user/000000000000000000000000' ],
+        [ 54, 'http://www.example.com:80/favicon.ico' ],
+        [ 46, 'http://example.com:80/favicons/favicon-32x32.png' ],
+        [ 38, 'http://example.com:80/favicons/favicon-16x16.png' ],
+        [ 32, 'http://example.com:80/images/logo/devices.png' ],
+        [ 30, 'http://example.com:80/images/icon/collapse.png' ],
+        [ 30, 'http://example.com:80/' ],
+        [ 30, 'http://example.com:80/images/logo/google-play.png' ] ]
+
+      analyzer({
+        files: ['logs/AWSLogs.log', 'logs/inner-logs/AWSLogs2.log']
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('ascending order', function (done) {
+      var result = [ [ 2,
+          'http://cf-source.example.com:80/img/205/205/2r1/562e37d9208bee5b70f56836.anim' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/600/300/2r0/54558148eab71c6c2517f1d9.jpg' ],
+        [ 2, 'http://example.com:80/ara?q=d%C3%B6vme' ],
+        [ 2,
+          'http://example.com:80/api/user/conversation/5590921f9d37a84e20286e3e?newerThan=1446921850251' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/205/205/2r1/562e450169a660e447a9166f.anim' ],
+        [ 2,
+          'http://example.com:80/api/article/563ddcc7c85cb4a82fe089b7/favorite' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/719/bound/2r0/546fc703e22d8b4a4585a530.jpg' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/719/bound/2r0/54b7cc3ed22d31bf16a10f69.webm' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/719/bound/2r0/541df13cf95ac89d31aab8c9.gif' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/719/bound/2r0/55c4b4226016e8fc606a7697.webp' ] ]
+
+      analyzer({
+        files: ['logs'],
+        ascending: true,
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('custom sortBy', function (done) {
+      var result = [ [ 2, 'https://example.com:443/yasam/iliskiler-haberleri' ],
+        [ 2, 'https://example.com:443/videolar' ],
+        [ 6,
+          'https://example.com:443/stylesheets/external/font-awesome.css' ],
+        [ 2, 'https://example.com:443/profil/streetkedisi' ],
+        [ 2, 'https://example.com:443/profil/burak-gumus' ],
+        [ 2, 'https://example.com:443/profil/54f1f544105208421b6a4fe5' ],
+        [ 2,
+          'https://example.com:443/index.json?scope=galleries&after=1446725611907&iteration=4' ],
+        [ 2,
+          'https://example.com:443/index.json?scope=galleries&after=1446572248013&iteration=7' ],
+        [ 10,
+          'https://example.com:443/img/user/000000000000000000000000' ],
+        [ 2, 'https://example.com:443/images/trans.png' ] ]
+
+      analyzer({
+        files: ['logs'],
+        sortBy: 1,
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+
+    it('custom sortBy ascending', function (done) {
+      var result = [ [ 2,
+          'http://cf-source.example.com:80/asset-58ce53eeda9c6cf6ca7b80696f9892fd/javascripts/index.js' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/205/205/2r1/554b2e47ab096db828ea3049.anim' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/205/205/2r1/562e37d9208bee5b70f56836.anim' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/205/205/2r1/562e3895ae7a75e377f934e0.jpg' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/205/205/2r1/562e38a572341d5d3e73437f.anim' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/205/205/2r1/562e3acae2ae3c3542c4fa31.anim' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/205/205/2r1/562e3ad9509a2871412f45f6.anim' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/205/205/2r1/562e3adbe2ae3c3542c4fa4d.anim' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/205/205/2r1/562e3b8d509a2871412f46e5.anim' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/205/205/2r1/562e3b9a6fe998e379513225.anim' ] ]
+
+      analyzer({
+        files: ['logs'],
+        ascending: true,
+        sortBy: 1,
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('custom column', function (done) {
+      var result = [ [ 12, '95.15.16.130:58685' ],
+        [ 12, '216.137.58.48:40350' ],
+        [ 12, '216.137.60.6:14612' ],
+        [ 10, '216.137.60.6:28983' ],
+        [ 10, '95.14.129.124:49456' ],
+        [ 10, '216.137.60.6:61784' ],
+        [ 10, '77.92.102.34:4652' ],
+        [ 8, '195.142.92.249:52094' ],
+        [ 8, '216.137.60.6:55852' ],
+        [ 8, '85.102.129.207:1713' ] ]
+
+      analyzer({
+        files: ['logs'],
+        cols: ['count', 'client:port'],
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('custom column client and backend IPs w/o port', function (done) {
+      var result1 = [ [ 84, '216.137.60.6' ],
+        [ 52, '54.239.167.74' ],
+        [ 40, '216.137.58.48' ],
+        [ 38, '95.7.142.5' ],
+        [ 36, '77.92.102.34' ],
+        [ 24, '54.239.171.99' ],
+        [ 24, '205.251.252.16' ],
+        [ 22, '54.240.156.59' ],
+        [ 22, '88.246.209.164' ],
+        [ 22, '95.14.129.124' ] ]
+      var result2 = [ [ 830, '10.0.2.143' ], [ 506, '10.0.0.215' ] ]
+
+      Promise.all([
+        analyzer({
+          files: ['logs'],
+          cols: ['count', 'client'],
+        }),
+
+        analyzer({
+          files: ['logs'],
+          cols: ['count', 'backend'],
+        })
+      ]).then(function (logs) {
+        logs[0].forEach(function (log, i) {
+          assert.equal(result1[i][0], log[0]);
+          assert.equal(result1[i][1], log[1]);
+        })
+
+        logs[1].forEach(function (log, i) {
+          assert.equal(result2[i][0], log[0]);
+          assert.equal(result2[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('multiple custom columns', function (done) {
+      var result = [ [ 2.094293, '205.251.252.16:5173' ],
+        [ 2.094293, '205.251.252.16:5173' ],
+        [ 1.423956, '85.107.47.8:20755' ],
+        [ 1.423956, '85.107.47.8:20755' ],
+        [ 1.272112, '54.240.156.59:63875' ],
+        [ 1.272112, '54.240.156.59:63875' ],
+        [ 1.2584359999999999, '54.240.145.65:64483' ],
+        [ 1.2584359999999999, '54.240.145.65:64483' ],
+        [ 1.2089199999999998, '54.240.145.65:50260' ],
+        [ 1.2089199999999998, '54.240.145.65:50260' ] ]
+
+      analyzer({
+        files: ['logs'],
+        cols: ['total_time', 'client:port'],
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('multiple custom columns with sortBy', function (done) {
+      var result = [ [ 2, '95.9.8.42:49810', '301' ],
+        [ 2, '95.70.131.112:38452', '200' ],
+        [ 2, '95.7.60.91:38709', '304' ],
+        [ 2, '95.7.142.5:1517', '200' ],
+        [ 2, '95.7.142.5:1516', '200' ],
+        [ 2, '95.7.142.5:1515', '200' ],
+        [ 2, '95.7.142.5:1514', '301' ],
+        [ 2, '95.7.142.5:1513', '302' ],
+        [ 2, '95.7.142.5:1513', '200' ],
+        [ 2, '95.7.142.5:1484', '200' ] ]
+
+      analyzer({
+        files: ['logs'],
+        cols: ['count', 'client:port', 'elb_status_code'],
+        sortBy: 1,
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('prefixing', function (done) {
+      var result = [ [ 12, '95.15.16.130:58685', '200' ],
+        [ 10, '95.14.129.124:49456', '200' ],
+        [ 8, '95.14.129.124:49457', '200' ],
+        [ 6, '95.10.99.215:2591', '200' ],
+        [ 6, '95.7.142.5:1445', '200' ],
+        [ 4, '95.65.184.99:52168', '200' ],
+        [ 4, '95.7.142.5:1454', '200' ],
+        [ 4, '95.7.142.5:1446', '200' ],
+        [ 4, '95.7.142.5:1444', '200' ],
+        [ 2, '95.13.202.204:35910', '304' ] ]
+
+      analyzer({
+        files: ['logs'],
+        cols: ['count', 'client:port', 'elb_status_code'],
+        prefixes: [null, '95'],
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('prefixing count field', function (done) {
+      var result = [ [ 12, '95.15.16.130:58685', '200' ],
+        [ 12, '216.137.58.48:40350', '200' ],
+        [ 10, '216.137.60.6:28983', '200' ],
+        [ 10, '95.14.129.124:49456', '200' ],
+        [ 10, '77.92.102.34:4652', '200' ] ]
+
+      analyzer({
+        files: ['logs'],
+        cols: ['count', 'client:port', 'elb_status_code'],
+        prefixes: ['1'],
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('prefixing count field with sortBy', function (done) {
+      var result = [ [ 12, '216.137.58.48:40350', '200' ],
+        [ 10, '216.137.60.6:28983', '200' ],
+        [ 10, '77.92.102.34:4652', '200' ],
+        [ 10, '95.14.129.124:49456', '200' ],
+        [ 12, '95.15.16.130:58685', '200' ] ]
+
+      analyzer({
+        files: ['logs'],
+        cols: ['count', 'client:port', 'elb_status_code'],
+        prefixes: ['1'],
+        sortBy: 1,
+        ascending: true,
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('custom limits for the list', function (done) {
+      var result = [ [ 66, 'http://example.com:80/images/trans.png' ],
+        [ 66, 'http://example.com:80/?mode=json&after=&iteration=1' ],
+        [ 58,
+          'http://example.com:80/img/user/000000000000000000000000' ],
+        [ 54, 'http://www.example.com:80/favicon.ico' ],
+        [ 46, 'http://example.com:80/favicons/favicon-32x32.png' ],
+        [ 38, 'http://example.com:80/favicons/favicon-16x16.png' ],
+        [ 32, 'http://example.com:80/images/logo/devices.png' ],
+        [ 30, 'http://example.com:80/images/icon/collapse.png' ],
+        [ 30, 'http://example.com:80/' ],
+        [ 30, 'http://example.com:80/images/logo/google-play.png' ],
+        [ 30, 'http://example.com:80/images/logo/app-store.png' ],
+        [ 28, 'http://example.com:80/favicon.ico' ],
+        [ 28, 'http://example.com:80/favicons/favicon-192x192.png' ],
+        [ 26,
+          'http://example.com:80/stylesheets/external/font-awesome.css' ],
+        [ 26, 'http://example.com:80/favicons/favicon-160x160.png' ],
+        [ 24,
+          'http://example.com:80/fonts/font-awesome-4.0.3/fontawesome-webfont.woff?v=4.0.3' ],
+        [ 24, 'http://example.com:80/images/logo/example-o-logo.png' ],
+        [ 24, 'http://example.com:80/images/logo/example-new2x.png' ],
+        [ 24, 'http://example.com:80/favicons/favicon.ico' ],
+        [ 22,
+          'http://example.com:80/images/icon/article-comment-example.png' ],
+        [ 20, 'http://example.com:80/favicons/favicon-96x96.png' ],
+        [ 14, 'http://example.com:80/example-ozel/test-haberleri' ],
+        [ 14, 'https://example.com:443/?mode=json&after=&iteration=1' ],
+        [ 12, 'http://example.com:80/mobile/ios/sidemenu.json' ],
+        [ 12, 'http://ios.example.com:80/mobile/ios/register-push' ] ]
+
+      analyzer({
+        files: ['logs'],
+        limit: 25,
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('custom limits with sortBy', function (done) {
+      var result = [ [ 2, 'https://example.com:443/yasam/iliskiler-haberleri' ],
+        [ 2, 'https://example.com:443/videolar' ],
+        [ 6,
+          'https://example.com:443/stylesheets/external/font-awesome.css' ],
+        [ 2, 'https://example.com:443/profil/streetkedisi' ],
+        [ 2, 'https://example.com:443/profil/burak-gumus' ],
+        [ 2, 'https://example.com:443/profil/54f1f544105208421b6a4fe5' ],
+        [ 2,
+          'https://example.com:443/index.json?scope=galleries&after=1446725611907&iteration=4' ],
+        [ 2,
+          'https://example.com:443/index.json?scope=galleries&after=1446572248013&iteration=7' ],
+        [ 10,
+          'https://example.com:443/img/user/000000000000000000000000' ],
+        [ 2, 'https://example.com:443/images/trans.png' ],
+        [ 2, 'https://example.com:443/images/logo/example-o-logo.png' ],
+        [ 6, 'https://example.com:443/images/logo/example-new2x.png' ],
+        [ 2, 'https://example.com:443/images/icon/collapse.png' ],
+        [ 2,
+          'https://example.com:443/images/icon/article-comment-example.png' ],
+        [ 2, 'https://example.com:443/galeriler' ],
+        [ 4,
+          'https://example.com:443/fonts/font-awesome-4.0.3/fontawesome-webfont.woff?v=4.0.3' ],
+        [ 2, 'https://example.com:443/favicons/favicon.ico' ],
+        [ 4, 'https://example.com:443/favicons/favicon-96x96.png' ],
+        [ 2, 'https://example.com:443/favicons/favicon-32x32.png' ],
+        [ 2, 'https://example.com:443/favicons/favicon-192x192.png' ] ]
+
+      analyzer({
+        files: ['logs'],
+        limit: 20,
+        sortBy: 1,
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('custom limit with custom columns and prefixing', function (done) {
+      var result = [ [ 12, '95.15.16.130:58685', '200' ],
+        [ 12, '216.137.58.48:40350', '200' ],
+        [ 10, '216.137.60.6:28983', '200' ],
+        [ 10, '95.14.129.124:49456', '200' ],
+        [ 10, '77.92.102.34:4652', '200' ] ]
+
+      analyzer({
+        files: ['logs'],
+        limit: 5,
+        cols: ['count', 'client:port', 'elb_status_code'],
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('request more records than there are', function (done) {
+      var result = [ [ 12, '95.15.16.130:58685', '200' ],
+        [ 10, '95.14.129.124:49456', '200' ],
+        [ 8, '95.14.129.124:49457', '200' ],
+        [ 6, '95.10.99.215:2591', '200' ],
+        [ 6, '95.7.142.5:1445', '200' ],
+        [ 4, '95.65.184.99:52168', '200' ],
+        [ 4, '95.7.142.5:1454', '200' ],
+        [ 4, '95.7.142.5:1446', '200' ],
+        [ 4, '95.7.142.5:1444', '200' ],
+        [ 2, '95.13.202.204:35910', '304' ],
+        [ 2, '95.13.122.139:55645', '200' ],
+        [ 2, '95.14.129.124:49512', '302' ],
+        [ 2, '95.5.5.17:62820', '302' ],
+        [ 2, '95.14.129.124:49512', '200' ],
+        [ 2, '95.7.142.5:1513', '302' ],
+        [ 2, '95.70.131.112:38452', '200' ],
+        [ 2, '95.12.73.113:54944', '301' ],
+        [ 2, '95.9.8.42:49810', '301' ],
+        [ 2, '95.15.104.165:42512', '301' ],
+        [ 2, '95.7.142.5:1517', '200' ],
+        [ 2, '95.7.142.5:1516', '200' ],
+        [ 2, '95.7.142.5:1515', '200' ],
+        [ 2, '95.10.99.215:2590', '200' ],
+        [ 2, '95.7.142.5:1514', '301' ],
+        [ 2, '95.7.142.5:1513', '200' ],
+        [ 2, '95.7.142.5:1484', '200' ],
+        [ 2, '95.7.142.5:1483', '200' ],
+        [ 2, '95.7.142.5:1482', '200' ],
+        [ 2, '95.0.141.142:10023', '200' ],
+        [ 2, '95.7.60.91:38709', '304' ],
+        [ 2, '95.7.142.5:1480', '200' ],
+        [ 2, '95.10.4.221:34614', '200' ],
+        [ 2, '95.65.183.56:54479', '302' ],
+        [ 2, '95.108.225.230:42116', '200' ],
+        [ 2, '95.15.108.252:46888', '301' ],
+        [ 2, '95.13.166.72:27286', '302' ],
+        [ 2, '95.13.166.72:27241', '304' ],
+        [ 2, '95.13.166.72:27225', '304' ],
+        [ 2, '95.13.166.72:27152', '304' ] ]
+
+      analyzer({
+        files: ['logs'],
+        limit: 5000,
+        cols: ['count', 'client:port', 'elb_status_code'],
+        prefixes: [null, '95']
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('filtering by date', function (done) {
+      var result = [ [ 4, 'http://example.com:80/images/logo/example-o-logo.png' ],
+        [ 4, 'http://example.com:80/images/logo/google-play.png' ],
+        [ 4, 'http://example.com:80/images/icon/collapse.png' ],
+        [ 4, 'http://example.com:80/images/logo/app-store.png' ],
+        [ 4, 'http://example.com:80/images/logo/devices.png' ],
+        [ 4, 'http://example.com:80/img/user/000000000000000000000000' ],
+        [ 4, 'http://example.com:80/favicon.ico' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/719/bound/2r0/54b7cc86d22d31bf16a10f86.webp' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/600/300/2r0/502a456a2ab3d1d03300af9a.jpg' ],
+        [ 2,
+          'http://cf-source.example.com:80/img/600/300/2r0/55f94dedf5ef747e16a4a640.jpg' ] ]
+
+      analyzer({
+        files: ['logs'],
+        start: new Date('2015-11-07T18:45:34.501734Z'),
+        end: new Date('2015-11-07T18:45:34.768481Z'),
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+
+    it('filtering by date 2', function (done) {
+      var result = [ [ 30, 'http://example.com:80/?mode=json&after=&iteration=1' ],
+        [ 30,
+          'http://example.com:80/img/user/000000000000000000000000' ],
+        [ 22, 'http://example.com:80/images/trans.png' ],
+        [ 20, 'http://example.com:80/images/icon/collapse.png' ],
+        [ 18, 'http://www.example.com:80/favicon.ico' ],
+        [ 18, 'http://example.com:80/' ],
+        [ 16, 'http://example.com:80/images/logo/app-store.png' ],
+        [ 16, 'http://example.com:80/favicons/favicon-32x32.png' ],
+        [ 16,
+          'http://example.com:80/stylesheets/external/font-awesome.css' ],
+        [ 16, 'http://example.com:80/images/logo/devices.png' ] ]
+
+      analyzer({
+        files: ['logs'],
+        end: new Date('2015-11-07T18:45:35.368553Z'),
+      })
+      .then(function (logs) {
+        logs.forEach(function (log, i) {
+          assert.equal(result[i][0], log[0]);
+          assert.equal(result[i][1], log[1]);
+        })
+        done()
+      })
+    })
+  })
 });

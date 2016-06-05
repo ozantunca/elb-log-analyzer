@@ -3,6 +3,7 @@
 import fs       from 'fs';
 import readline from 'readline';
 import _        from 'underscore';
+import glob     from 'glob';
 import async    from 'async';
 import Promise  from 'bluebird';
 
@@ -10,52 +11,83 @@ const FIELDS = ['timestamp', 'elb', 'client:port', 'client', 'backend:port', 'ba
                 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code',
                 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count'];
 
-export default async function ({
+module.exports = function ({
   logs = [], files = [], cols = ['count', 'requested_resource'], prefixes = [],
-  sortBy = 0, limit = 10, ascending = false, start, end, progressFunc = () => {}
+  sortBy = 0, limit = 10, ascending = false, start, end, onProgress = () => {}, onStart = () => {}
 }) {
   return new Promise((pass, fail) => {
-    // Fail when user requests a column that is not support by the analyzer
-    if (cols.some(c => !~FIELDS.indexOf(c))) {
-      return fail('One or more of the requested columns does not exist.');
-    }
+    // collect file names
+    async.map(files, (file, done) => {
+      async.auto({
+        // Check if the file is a directory
+        directory (next) {
+          glob(files[0] + '/**/*', { nodir: true }, next);
+        },
 
-    // Fail when user gives a sortBy value for a non-existent column
-    if (sortBy < 0 || sortBy > cols.length - 1) {
-      return fail('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
-    }
+        // If it's not directory, pass single file
+        singleFile: ['directory', function (next, results) {
+          if (results.directory && !!results.directory.length) {
+            return next(null, results.directory);
+          }
 
-    const processor = generateProcessor({
-      cols,
-      sortBy,
-      limit,
-      ascending,
-      prefixes,
-      start,
-      end,
-    });
+          glob(files[0], next);
+        }]
+      }, function (err, results) {
+        if (err) return done(err);
+        if (!results.singleFile.length) return done(`No file with name '${file}' found.`);
 
-    const filterFunc = generateFilter(prefixes.slice(), cols);
+        done(null, results.singleFile);
+      });
+    }, (err, filenames) => {
+      if (err) return fail(err);
 
-    parseFiles(files, processor.process.bind(processor, filterFunc), progressFunc)
-    .then(function () {
-      let logs = processor.getResults();
+      filenames = _.flatten(filenames);
 
-      if (ascending) {
-        logs = logs.slice(0, limit);
-      } else {
-        logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse();
+      // Processing starts
+      onStart(filenames);
+
+      // Fail when user requests a column that is not support by the analyzer
+      if (cols.some(c => !~FIELDS.indexOf(c))) {
+        return fail('One or more of the requested columns does not exist.');
       }
 
-      pass(logs);
-    })
-    .catch(fail);
+      // Fail when user gives a sortBy value for a non-existent column
+      if (sortBy < 0 || sortBy > cols.length - 1) {
+        return fail('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
+      }
+
+      const processor = generateProcessor({
+        cols,
+        sortBy,
+        limit,
+        ascending,
+        prefixes,
+        start,
+        end,
+      });
+
+      const filterFunc = generateFilter(prefixes.slice(), cols);
+
+      parseFiles(filenames, processor.process.bind(processor, filterFunc), onProgress)
+      .then(function () {
+        let logs = processor.getResults();
+
+        if (ascending) {
+          logs = logs.slice(0, limit);
+        } else {
+          logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse();
+        }
+
+        pass(logs);
+      })
+      .catch(fail);
+    });
   })
 }
 
 // Reads files line by line and passes them
 // to the processor function
-function parseFiles(files, processFunc, progressFunc) {
+function parseFiles(files, processFunc, onProgress) {
   return new Promise((pass, fail) => {
     // Loop through files
     async.map(files, function (file, next) {
@@ -69,7 +101,7 @@ function parseFiles(files, processFunc, progressFunc) {
       });
 
       RL.on('close', () => {
-        progressFunc();
+        onProgress();
         next();
       });
 

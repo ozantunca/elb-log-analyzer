@@ -10,17 +10,9 @@ var _lib = require('./lib.js');
 
 var _lib2 = _interopRequireDefault(_lib);
 
-var _async = require('async');
-
-var _async2 = _interopRequireDefault(_async);
-
 var _underscore = require('underscore');
 
 var _underscore2 = _interopRequireDefault(_underscore);
-
-var _glob = require('glob');
-
-var _glob2 = _interopRequireDefault(_glob);
 
 var _safe = require('colors/safe');
 
@@ -36,14 +28,15 @@ var VERSION = 'v1.0.0',
     USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan'];
 
 var options = require('optimist').argv,
-    files = options._;
+    files = options._,
+    bar = void 0;
 
 if (options.version || options.v) {
   console.log(VERSION);
   process.exit();
 }
 
-if (files == 0) {
+if (!files.length) {
   handler(new Error('No argument or file specified'));
   process.exit();
 }
@@ -99,57 +92,27 @@ _underscore2.default.each(options, function (arg, key) {
   }
 });
 
-// If files array consists of only one value it could
-// be either a single file or a directory of files
-// to be processed.
-if (files.length == 1) {
-  _async2.default.auto({
-    // Check if the file is a directory
-
-    directory: function directory(next) {
-      (0, _glob2.default)(files[0] + '/*', next);
-    },
-
-
-    // If it's not directory, pass single file
-    singleFile: ['directory', function (next, results) {
-      if (results.directory && !!results.directory.length) {
-        return next(null, results.directory);
-      }
-
-      (0, _glob2.default)(files[0], next);
-    }]
-  }, function (err, results) {
-    if (err) return handler(err);
-    if (!results.singleFile.length) return handler(new Error('No file found.'));
-
-    files = results.singleFile;
-    exec();
-  });
-} else exec();
-
-function exec() {
-  var bar = new _progress2.default(' processing [:bar] :percent :etas', {
-    complete: '=',
-    incomplete: ' ',
-    width: 30,
-    total: files.length
-  });
-
-  (0, _lib2.default)(_extends({
-    files: files
-  }, options, {
-    progressFunc: function progressFunc() {
-      bar.tick();
-    }
-  })).then(function (logs) {
-    _underscore2.default.each(logs, function (log, i) {
-      console.log(_safe2.default.white(i + 1) + ' - ' + _underscore2.default.map(log, function (l, index) {
-        return _safe2.default[USEFUL_COLORS[index % USEFUL_COLORS.length]](l);
-      }).join(_safe2.default.white(' - ')));
+(0, _lib2.default)(_extends({
+  files: files
+}, options, {
+  onProgress: function onProgress() {
+    bar.tick();
+  },
+  onStart: function onStart(filenames) {
+    bar = new _progress2.default(' processing [:bar] :percent :etas', {
+      complete: '=',
+      incomplete: ' ',
+      width: 30,
+      total: filenames.length
     });
-  }).catch(handler);
-}
+  }
+})).then(function (logs) {
+  _underscore2.default.each(logs, function (log, i) {
+    console.log(_safe2.default.white(i + 1) + ' - ' + _underscore2.default.map(log, function (l, index) {
+      return _safe2.default[USEFUL_COLORS[index % USEFUL_COLORS.length]](l);
+    }).join(_safe2.default.white(' - ')));
+  });
+}).catch(handler);
 
 function handler(err) {
   console.log(_safe2.default.red('An error occured') + ': ', _safe2.default.cyan(err));

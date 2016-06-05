@@ -1,9 +1,5 @@
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 var _fs = require('fs');
@@ -18,6 +14,10 @@ var _underscore = require('underscore');
 
 var _underscore2 = _interopRequireDefault(_underscore);
 
+var _glob = require('glob');
+
+var _glob2 = _interopRequireDefault(_glob);
+
 var _async = require('async');
 
 var _async2 = _interopRequireDefault(_async);
@@ -28,90 +28,105 @@ var _bluebird2 = _interopRequireDefault(_bluebird);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new _bluebird2.default(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return _bluebird2.default.resolve(value).then(function (value) { return step("next", value); }, function (err) { return step("throw", err); }); } } return step("next"); }); }; }
-
 var FIELDS = ['timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count'];
 
-exports.default = function () {
-  var ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee(_ref) {
-    var _ref$logs = _ref.logs;
-    var logs = _ref$logs === undefined ? [] : _ref$logs;
-    var _ref$files = _ref.files;
-    var files = _ref$files === undefined ? [] : _ref$files;
-    var _ref$cols = _ref.cols;
-    var cols = _ref$cols === undefined ? ['count', 'requested_resource'] : _ref$cols;
-    var _ref$prefixes = _ref.prefixes;
-    var prefixes = _ref$prefixes === undefined ? [] : _ref$prefixes;
-    var _ref$sortBy = _ref.sortBy;
-    var sortBy = _ref$sortBy === undefined ? 0 : _ref$sortBy;
-    var _ref$limit = _ref.limit;
-    var limit = _ref$limit === undefined ? 10 : _ref$limit;
-    var _ref$ascending = _ref.ascending;
-    var ascending = _ref$ascending === undefined ? false : _ref$ascending;
-    var start = _ref.start;
-    var end = _ref.end;
-    var _ref$progressFunc = _ref.progressFunc;
-    var progressFunc = _ref$progressFunc === undefined ? function () {} : _ref$progressFunc;
-    return regeneratorRuntime.wrap(function _callee$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            return _context.abrupt('return', new _bluebird2.default(function (pass, fail) {
-              // Fail when user requests a column that is not support by the analyzer
-              if (cols.some(function (c) {
-                return ! ~FIELDS.indexOf(c);
-              })) {
-                return fail('One or more of the requested columns does not exist.');
-              }
+module.exports = function (_ref) {
+  var _ref$logs = _ref.logs;
+  var logs = _ref$logs === undefined ? [] : _ref$logs;
+  var _ref$files = _ref.files;
+  var files = _ref$files === undefined ? [] : _ref$files;
+  var _ref$cols = _ref.cols;
+  var cols = _ref$cols === undefined ? ['count', 'requested_resource'] : _ref$cols;
+  var _ref$prefixes = _ref.prefixes;
+  var prefixes = _ref$prefixes === undefined ? [] : _ref$prefixes;
+  var _ref$sortBy = _ref.sortBy;
+  var sortBy = _ref$sortBy === undefined ? 0 : _ref$sortBy;
+  var _ref$limit = _ref.limit;
+  var limit = _ref$limit === undefined ? 10 : _ref$limit;
+  var _ref$ascending = _ref.ascending;
+  var ascending = _ref$ascending === undefined ? false : _ref$ascending;
+  var start = _ref.start;
+  var end = _ref.end;
+  var _ref$onProgress = _ref.onProgress;
+  var onProgress = _ref$onProgress === undefined ? function () {} : _ref$onProgress;
+  var _ref$onStart = _ref.onStart;
+  var onStart = _ref$onStart === undefined ? function () {} : _ref$onStart;
 
-              // Fail when user gives a sortBy value for a non-existent column
-              if (sortBy < 0 || sortBy > cols.length - 1) {
-                return fail('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
-              }
+  return new _bluebird2.default(function (pass, fail) {
+    // collect file names
+    _async2.default.map(files, function (file, done) {
+      _async2.default.auto({
+        // Check if the file is a directory
 
-              var processor = generateProcessor({
-                cols: cols,
-                sortBy: sortBy,
-                limit: limit,
-                ascending: ascending,
-                prefixes: prefixes,
-                start: start,
-                end: end
-              });
+        directory: function directory(next) {
+          (0, _glob2.default)(files[0] + '/**/*', { nodir: true }, next);
+        },
 
-              var filterFunc = generateFilter(prefixes.slice(), cols);
 
-              parseFiles(files, processor.process.bind(processor, filterFunc), progressFunc).then(function () {
-                var logs = processor.getResults();
+        // If it's not directory, pass single file
+        singleFile: ['directory', function (next, results) {
+          if (results.directory && !!results.directory.length) {
+            return next(null, results.directory);
+          }
 
-                if (ascending) {
-                  logs = logs.slice(0, limit);
-                } else {
-                  logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse();
-                }
+          (0, _glob2.default)(files[0], next);
+        }]
+      }, function (err, results) {
+        if (err) return done(err);
+        if (!results.singleFile.length) return done('No file with name \'' + file + '\' found.');
 
-                pass(logs);
-              }).catch(fail);
-            }));
+        done(null, results.singleFile);
+      });
+    }, function (err, filenames) {
+      if (err) return fail(err);
 
-          case 1:
-          case 'end':
-            return _context.stop();
-        }
+      filenames = _underscore2.default.flatten(filenames);
+
+      // Processing starts
+      onStart(filenames);
+
+      // Fail when user requests a column that is not support by the analyzer
+      if (cols.some(function (c) {
+        return ! ~FIELDS.indexOf(c);
+      })) {
+        return fail('One or more of the requested columns does not exist.');
       }
-    }, _callee, this);
-  }));
 
-  return function (_x) {
-    return ref.apply(this, arguments);
-  };
-}();
+      // Fail when user gives a sortBy value for a non-existent column
+      if (sortBy < 0 || sortBy > cols.length - 1) {
+        return fail('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
+      }
+
+      var processor = generateProcessor({
+        cols: cols,
+        sortBy: sortBy,
+        limit: limit,
+        ascending: ascending,
+        prefixes: prefixes,
+        start: start,
+        end: end
+      });
+
+      var filterFunc = generateFilter(prefixes.slice(), cols);
+
+      parseFiles(filenames, processor.process.bind(processor, filterFunc), onProgress).then(function () {
+        var logs = processor.getResults();
+
+        if (ascending) {
+          logs = logs.slice(0, limit);
+        } else {
+          logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse();
+        }
+
+        pass(logs);
+      }).catch(fail);
+    });
+  });
+};
 
 // Reads files line by line and passes them
 // to the processor function
-
-
-function parseFiles(files, processFunc, progressFunc) {
+function parseFiles(files, processFunc, onProgress) {
   return new _bluebird2.default(function (pass, fail) {
     // Loop through files
     _async2.default.map(files, function (file, next) {
@@ -125,7 +140,7 @@ function parseFiles(files, processFunc, progressFunc) {
       });
 
       RL.on('close', function () {
-        progressFunc();
+        onProgress();
         next();
       });
     }, function (err) {

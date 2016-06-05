@@ -3,9 +3,7 @@
 
 import 'babel-polyfill';
 import lib   from './lib.js';
-import async from 'async';
 import _     from 'underscore';
-import glob  from 'glob';
 import colors from 'colors/safe';
 import ProgressBar from 'progress';
 
@@ -13,14 +11,14 @@ const VERSION = 'v1.0.0'
   , USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
 
 let options = require('optimist').argv
-  , files = options._;
+  , files = options._, bar;
 
 if (options.version || options.v) {
   console.log(VERSION);
   process.exit();
 }
 
-if (files == 0) {
+if (!files.length) {
   handler(new Error('No argument or file specified'));
   process.exit();
 }
@@ -76,56 +74,27 @@ _.each(options, function (arg, key) {
   }
 });
 
-// If files array consists of only one value it could
-// be either a single file or a directory of files
-// to be processed.
-if (files.length == 1) {
-  async.auto({
-    // Check if the file is a directory
-    directory (next) {
-      glob(files[0] + '/*', next);
-    },
-
-    // If it's not directory, pass single file
-    singleFile: ['directory', function (next, results) {
-      if (results.directory && !!results.directory.length) {
-        return next(null, results.directory);
-      }
-
-      glob(files[0], next);
-    }]
-  }, function (err, results) {
-    if (err) return handler(err);
-    if (!results.singleFile.length) return handler(new Error('No file found.'));
-
-    files = results.singleFile;
-    exec();
-  });
-} else exec();
-
-
-function exec () {
-  let bar = new ProgressBar(' processing [:bar] :percent :etas', {
-    complete: '=',
-    incomplete: ' ',
-    width: 30,
-    total: files.length,
-  });
-
-  lib({
-    files,
-    ...options,
-    progressFunc () {
-      bar.tick();
-    },
-  })
-  .then(function (logs) {
-    _.each(logs, (log, i) => {
-      console.log(colors.white(i + 1) + ' - ' + _.map(log, (l, index) => colors[USEFUL_COLORS[index % USEFUL_COLORS.length]](l) ).join(colors.white(' - ')));
+lib({
+  files,
+  ...options,
+  onProgress () {
+    bar.tick();
+  },
+  onStart (filenames) {
+    bar = new ProgressBar(' processing [:bar] :percent :etas', {
+      complete: '=',
+      incomplete: ' ',
+      width: 30,
+      total: filenames.length,
     });
-  })
-  .catch(handler);
-}
+  }
+})
+.then(function (logs) {
+  _.each(logs, (log, i) => {
+    console.log(colors.white(i + 1) + ' - ' + _.map(log, (l, index) => colors[USEFUL_COLORS[index % USEFUL_COLORS.length]](l) ).join(colors.white(' - ')));
+  });
+})
+.catch(handler);
 
 function handler (err) {
   console.log(`${colors.red('An error occured')}: `, colors.cyan(err));
