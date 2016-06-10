@@ -133,6 +133,7 @@ function parseFiles(files, processFunc, onProgress) {
     // Loop through files
     _async2.default.map(files, function (file, next) {
       var RL = _readline2.default.createInterface({
+        terminal: false,
         input: _fs2.default.createReadStream(file)
       });
 

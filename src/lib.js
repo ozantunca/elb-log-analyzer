@@ -93,6 +93,7 @@ function parseFiles(files, processFunc, onProgress) {
     // Loop through files
     async.map(files, function (file, next) {
       const RL = readline.createInterface({
+        terminal: false,
         input: fs.createReadStream(file)
       });
 
