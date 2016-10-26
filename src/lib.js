@@ -26,7 +26,7 @@ module.exports = function ({
         },
 
         // If it's not directory, pass single file
-        singleFile: ['directory', function (next, results) {
+        singleFile: ['directory', function (results, next) {
           if (results.directory && !!results.directory.length) {
             return next(null, results.directory);
           }

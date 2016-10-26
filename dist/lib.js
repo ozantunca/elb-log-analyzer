@@ -1,6 +1,6 @@
 'use strict';
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 require('babel-polyfill');
 
@@ -33,40 +33,39 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var FIELDS = ['timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count'];
 
 module.exports = function (_ref) {
-  var _ref$logs = _ref.logs;
-  var logs = _ref$logs === undefined ? [] : _ref$logs;
-  var _ref$files = _ref.files;
-  var files = _ref$files === undefined ? [] : _ref$files;
-  var _ref$cols = _ref.cols;
-  var cols = _ref$cols === undefined ? ['count', 'requested_resource'] : _ref$cols;
-  var _ref$prefixes = _ref.prefixes;
-  var prefixes = _ref$prefixes === undefined ? [] : _ref$prefixes;
-  var _ref$sortBy = _ref.sortBy;
-  var sortBy = _ref$sortBy === undefined ? 0 : _ref$sortBy;
-  var _ref$limit = _ref.limit;
-  var limit = _ref$limit === undefined ? 10 : _ref$limit;
-  var _ref$ascending = _ref.ascending;
-  var ascending = _ref$ascending === undefined ? false : _ref$ascending;
-  var start = _ref.start;
-  var end = _ref.end;
-  var _ref$onProgress = _ref.onProgress;
-  var onProgress = _ref$onProgress === undefined ? function () {} : _ref$onProgress;
-  var _ref$onStart = _ref.onStart;
-  var onStart = _ref$onStart === undefined ? function () {} : _ref$onStart;
+  var _ref$logs = _ref.logs,
+      logs = _ref$logs === undefined ? [] : _ref$logs,
+      _ref$files = _ref.files,
+      files = _ref$files === undefined ? [] : _ref$files,
+      _ref$cols = _ref.cols,
+      cols = _ref$cols === undefined ? ['count', 'requested_resource'] : _ref$cols,
+      _ref$prefixes = _ref.prefixes,
+      prefixes = _ref$prefixes === undefined ? [] : _ref$prefixes,
+      _ref$sortBy = _ref.sortBy,
+      sortBy = _ref$sortBy === undefined ? 0 : _ref$sortBy,
+      _ref$limit = _ref.limit,
+      limit = _ref$limit === undefined ? 10 : _ref$limit,
+      _ref$ascending = _ref.ascending,
+      ascending = _ref$ascending === undefined ? false : _ref$ascending,
+      start = _ref.start,
+      end = _ref.end,
+      _ref$onProgress = _ref.onProgress,
+      onProgress = _ref$onProgress === undefined ? function () {} : _ref$onProgress,
+      _ref$onStart = _ref.onStart,
+      onStart = _ref$onStart === undefined ? function () {} : _ref$onStart;
 
   return new _bluebird2.default(function (pass, fail) {
     // collect file names
     _async2.default.map(files, function (file, done) {
       _async2.default.auto({
         // Check if the file is a directory
-
         directory: function directory(next) {
           (0, _glob2.default)(files[0] + '/**/*', { nodir: true }, next);
         },
 
 
         // If it's not directory, pass single file
-        singleFile: ['directory', function (next, results) {
+        singleFile: ['directory', function (results, next) {
           if (results.directory && !!results.directory.length) {
             return next(null, results.directory);
           }
@@ -89,7 +88,7 @@ module.exports = function (_ref) {
 
       // Fail when user requests a column that is not support by the analyzer
       if (cols.some(function (c) {
-        return ! ~FIELDS.indexOf(c);
+        return !~FIELDS.indexOf(c);
       })) {
         return fail('One or more of the requested columns does not exist.');
       }
@@ -174,13 +173,13 @@ function generateFilter(prefixes, cols) {
 }
 
 function generateProcessor(_ref2) {
-  var cols = _ref2.cols;
-  var sortBy = _ref2.sortBy;
-  var ascending = _ref2.ascending;
-  var limit = _ref2.limit;
-  var prefixes = _ref2.prefixes;
-  var start = _ref2.start;
-  var end = _ref2.end;
+  var cols = _ref2.cols,
+      sortBy = _ref2.sortBy,
+      ascending = _ref2.ascending,
+      limit = _ref2.limit,
+      prefixes = _ref2.prefixes,
+      start = _ref2.start,
+      end = _ref2.end;
 
   var COUNT_INDEX = cols.indexOf('count');
 
