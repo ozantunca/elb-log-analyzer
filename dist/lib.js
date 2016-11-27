@@ -30,7 +30,7 @@ var _bluebird2 = _interopRequireDefault(_bluebird);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var FIELDS = ['timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count'];
+var FIELDS = ['timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count', 'target_group_arn', 'trace_id', 'ssl_cipher', 'ssl_protocol'];
 
 module.exports = function (_ref) {
   var _ref$logs = _ref.logs,
@@ -318,12 +318,8 @@ function splice(lines, newLine, sortBy) {
 // @todo: will be customisable to be used for logs
 // other than ELB's
 function parseLine(line) {
-  var ATTRIBUTES = line.split(' ');
+  var ATTRIBUTES = line.match(/[^\s"']+|"([^"]*)"/gi);
   var user_agent = '';
-
-  for (var i = 14; i < ATTRIBUTES.length - 2; i++) {
-    user_agent = user_agent + ATTRIBUTES[i] + " ";
-  }
 
   return {
     'timestamp': ATTRIBUTES[0],
@@ -339,10 +335,14 @@ function parseLine(line) {
     'backend_status_code': ATTRIBUTES[8],
     'received_bytes': ATTRIBUTES[9],
     'sent_bytes': ATTRIBUTES[10],
-    'request': ATTRIBUTES[11] + ' ' + ATTRIBUTES[12] + ' ' + ATTRIBUTES[13],
-    'requested_resource': ATTRIBUTES[12],
-    user_agent: user_agent,
-    'total_time': parseFloat(ATTRIBUTES[4]) + parseFloat(ATTRIBUTES[5]) + parseFloat(ATTRIBUTES[6])
+    'request': ATTRIBUTES[11],
+    'requested_resource': String(ATTRIBUTES[11]).split(' ')[1],
+    'user_agent': ATTRIBUTES[12],
+    'total_time': parseFloat(ATTRIBUTES[4]) + parseFloat(ATTRIBUTES[5]) + parseFloat(ATTRIBUTES[6]),
+    'ssl_cipher': ATTRIBUTES[13],
+    'ssl_protocol': ATTRIBUTES[14],
+    'target_group_arn': ATTRIBUTES[15],
+    'trace_id': ATTRIBUTES[16]
   };
 }
 
