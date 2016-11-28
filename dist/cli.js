@@ -22,9 +22,13 @@ var _progress = require('progress');
 
 var _progress2 = _interopRequireDefault(_progress);
 
+var _fs = require('fs');
+
+var _fs2 = _interopRequireDefault(_fs);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var VERSION = 'v1.0.0',
+var VERSION = 'v1.0.5',
     USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan'];
 
 var options = require('optimist').argv,
@@ -32,7 +36,7 @@ var options = require('optimist').argv,
     bar = void 0;
 
 if (options.version || options.v) {
-  console.log(VERSION);
+  console.log(JSON.parse(_fs2.default.readFileSync(__dirname + '/../package.json')).version);
   process.exit();
 }
 

@@ -6,15 +6,15 @@ import lib   from './lib.js';
 import _     from 'underscore';
 import colors from 'colors/safe';
 import ProgressBar from 'progress';
+import fs from 'fs';
 
-const VERSION = 'v1.0.0'
-  , USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
+const USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
 
 let options = require('optimist').argv
   , files = options._, bar;
 
 if (options.version || options.v) {
-  console.log(VERSION);
+  console.log(JSON.parse(fs.readFileSync(__dirname + '/../package.json')).version);
   process.exit();
 }
 
