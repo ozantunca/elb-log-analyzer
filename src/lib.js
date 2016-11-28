@@ -19,11 +19,11 @@ module.exports = function ({
 }) {
   return new Promise((pass, fail) => {
     // collect file names
-    async.map(files, (file, done) => {
+    async.map(files, (file, next) => {
       async.auto({
         // Check if the file is a directory
         directory (next) {
-          glob(files[0] + '/**/*', { nodir: true }, next);
+          glob(file + '/**/*', { nodir: true }, next);
         },
 
         // If it's not directory, pass single file
@@ -32,13 +32,12 @@ module.exports = function ({
             return next(null, results.directory);
           }
 
-          glob(files[0], next);
+          glob(file, next);
         }]
       }, function (err, results) {
-        if (err) return done(err);
-        if (!results.singleFile.length) return done(`No file with name '${file}' found.`);
-
-        done(null, results.singleFile);
+        if (err) return next(err);
+        if (!results.singleFile.length) return next(`No file with name '${file}' found.`);
+        next(null, results.singleFile);
       });
     }, (err, filenames) => {
       if (err) return fail(err);

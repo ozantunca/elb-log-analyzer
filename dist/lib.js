@@ -56,11 +56,11 @@ module.exports = function (_ref) {
 
   return new _bluebird2.default(function (pass, fail) {
     // collect file names
-    _async2.default.map(files, function (file, done) {
+    _async2.default.map(files, function (file, next) {
       _async2.default.auto({
         // Check if the file is a directory
         directory: function directory(next) {
-          (0, _glob2.default)(files[0] + '/**/*', { nodir: true }, next);
+          (0, _glob2.default)(file + '/**/*', { nodir: true }, next);
         },
 
 
@@ -70,13 +70,12 @@ module.exports = function (_ref) {
             return next(null, results.directory);
           }
 
-          (0, _glob2.default)(files[0], next);
+          (0, _glob2.default)(file, next);
         }]
       }, function (err, results) {
-        if (err) return done(err);
-        if (!results.singleFile.length) return done('No file with name \'' + file + '\' found.');
-
-        done(null, results.singleFile);
+        if (err) return next(err);
+        if (!results.singleFile.length) return next('No file with name \'' + file + '\' found.');
+        next(null, results.singleFile);
       });
     }, function (err, filenames) {
       if (err) return fail(err);
