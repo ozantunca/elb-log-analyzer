@@ -1,5 +1,7 @@
 'use strict';
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 require('babel-polyfill');
@@ -30,7 +32,7 @@ var _bluebird2 = _interopRequireDefault(_bluebird);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var FIELDS = ['timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count', 'target_group_arn', 'trace_id', 'ssl_cipher', 'ssl_protocol'];
+var FIELDS = ['type', 'timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count', 'target_group_arn', 'trace_id', 'ssl_cipher', 'ssl_protocol'];
 
 module.exports = function (_ref) {
   var _ref$logs = _ref.logs,
@@ -194,6 +196,8 @@ function generateProcessor(_ref2) {
           process: function process(filterFunc, line) {
             line = parseLine(line);
 
+            if (!line) return;
+
             // filter lines by date if requested
             if ((start || end) && filterByDate(line, start, end)) return;
 
@@ -317,10 +321,23 @@ function splice(lines, newLine, sortBy) {
 // @todo: will be customisable to be used for logs
 // other than ELB's
 function parseLine(line) {
-  var ATTRIBUTES = line.match(/[^\s"']+|"([^"]*)"/gi);
-  var user_agent = '';
+  if (!line || line == '') {
+    return false;
+  }
 
-  return {
+  var ATTRIBUTES = line.match(/[^\s"']+|"([^"]*)"/gi);
+  var user_agent = '',
+      parsedLine = {};
+
+  if (!ATTRIBUTES) {
+    return false;
+  }
+
+  if (isNaN(new Date(ATTRIBUTES[0]).getTime())) {
+    parsedLine.type = ATTRIBUTES.shift();
+  }
+
+  parsedLine = _extends({}, parsedLine, {
     'timestamp': ATTRIBUTES[0],
     'elb': ATTRIBUTES[1],
     'client': String(ATTRIBUTES[2]).split(':')[0],
@@ -342,7 +359,9 @@ function parseLine(line) {
     'ssl_protocol': ATTRIBUTES[14],
     'target_group_arn': ATTRIBUTES[15],
     'trace_id': ATTRIBUTES[16]
-  };
+  });
+
+  return parsedLine;
 }
 
 function filterByDate(line, start, end) {

@@ -8,7 +8,7 @@ import glob     from 'glob';
 import async    from 'async';
 import Promise  from 'bluebird';
 
-const FIELDS = ['timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time',
+const FIELDS = ['type', 'timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time',
                 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code',
                 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count',
                 'target_group_arn', 'trace_id', 'ssl_cipher', 'ssl_protocol'];
@@ -145,6 +145,9 @@ function generateProcessor ({ cols, sortBy, ascending, limit, prefixes, start, e
       process (filterFunc, line) {
         line = parseLine(line);
 
+        if (!line)
+          return;
+
         // filter lines by date if requested
         if ((start || end) && filterByDate(line, start, end))
           return;
@@ -261,10 +264,23 @@ function splice (lines, newLine, sortBy) {
 // @todo: will be customisable to be used for logs
 // other than ELB's
 function parseLine (line) {
-  const ATTRIBUTES = line.match(/[^\s"']+|"([^"]*)"/gi);
-  let user_agent = '';
+  if (!line || line == '') {
+    return false;
+  }
 
-  return {
+  const ATTRIBUTES = line.match(/[^\s"']+|"([^"]*)"/gi);
+  let user_agent = '', parsedLine = {};
+
+  if (!ATTRIBUTES) {
+    return false;
+  }
+
+  if (isNaN((new Date(ATTRIBUTES[0])).getTime())) {
+    parsedLine.type = ATTRIBUTES.shift()
+  }
+
+  parsedLine = {
+    ...parsedLine,
     'timestamp': ATTRIBUTES[0],
     'elb': ATTRIBUTES[1],
     'client': String(ATTRIBUTES[2]).split(':')[0],
@@ -287,6 +303,8 @@ function parseLine (line) {
     'target_group_arn': ATTRIBUTES[15],
     'trace_id': ATTRIBUTES[16]
   };
+
+  return parsedLine;
 }
 
 function filterByDate (line, start, end) {

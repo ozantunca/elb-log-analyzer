@@ -28,8 +28,7 @@ var _fs2 = _interopRequireDefault(_fs);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var VERSION = 'v1.0.5',
-    USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan'];
+var USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan'];
 
 var options = require('optimist').argv,
     files = options._,
