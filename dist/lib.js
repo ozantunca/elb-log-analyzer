@@ -2,8 +2,6 @@
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 require('babel-polyfill');
 
 var _fs = require('fs');
@@ -185,116 +183,104 @@ function generateProcessor(_ref2) {
   var COUNT_INDEX = cols.indexOf('count');
 
   if (COUNT_INDEX > -1) {
-    var _ret = function () {
-      var counts = {};
-      var tempCols = cols.slice(0);
+    var counts = {};
+    var tempCols = cols.slice(0);
 
-      tempCols.splice(COUNT_INDEX, 1);
+    tempCols.splice(COUNT_INDEX, 1);
 
-      return {
-        v: {
-          process: function process(filterFunc, line) {
-            line = parseLine(line);
+    return {
+      process: function process(filterFunc, line) {
+        line = parseLine(line);
 
-            if (!line) return;
+        if (!line) return;
 
-            // filter lines by date if requested
-            if ((start || end) && filterByDate(line, start, end)) return;
+        // filter lines by date if requested
+        if ((start || end) && filterByDate(line, start, end)) return;
 
-            line = _underscore2.default.map(tempCols, function (c) {
-              return line[c];
-            });
+        line = _underscore2.default.map(tempCols, function (c) {
+          return line[c];
+        });
 
-            // Drop the line if any of the columns requested does not exist in this line
-            if (line.some(function (c) {
-              return !c && c !== 0;
-            })) return;
+        // Drop the line if any of the columns requested does not exist in this line
+        if (line.some(function (c) {
+          return !c && c !== 0;
+        })) return;
 
-            // Count column is not in 'line' at this moment
-            // so we are defining a new variable that includes it
-            if (filterFunc && !filterFunc(line)) return;
+        // Count column is not in 'line' at this moment
+        // so we are defining a new variable that includes it
+        if (filterFunc && !filterFunc(line)) return;
 
-            // stringifying columns serves as a multi-column group_by
-            var LINESTRING = JSON.stringify(line);
-            counts[LINESTRING] = counts[LINESTRING] ? counts[LINESTRING] + 1 : 1;
-          },
-          getResults: function getResults() {
-            var q = _underscore2.default.chain(counts).pairs().map(function (l) {
-              var COUNT = l[1];
-              l = JSON.parse(l[0]);
-              l.splice(COUNT_INDEX, 0, COUNT);
-              return l;
-            });
+        // stringifying columns serves as a multi-column group_by
+        var LINESTRING = JSON.stringify(line);
+        counts[LINESTRING] = counts[LINESTRING] ? counts[LINESTRING] + 1 : 1;
+      },
+      getResults: function getResults() {
+        var q = _underscore2.default.chain(counts).pairs().map(function (l) {
+          var COUNT = l[1];
+          l = JSON.parse(l[0]);
+          l.splice(COUNT_INDEX, 0, COUNT);
+          return l;
+        });
 
-            if (prefixes && prefixes[COUNT_INDEX]) {
-              q = q.filter(function (line) {
-                return line[COUNT_INDEX].toString().startsWith(prefixes[COUNT_INDEX]);
-              });
-            }
-
-            return q.sortBy(sortBy).value();
-          }
+        if (prefixes && prefixes[COUNT_INDEX]) {
+          q = q.filter(function (line) {
+            return line[COUNT_INDEX].toString().startsWith(prefixes[COUNT_INDEX]);
+          });
         }
-      };
-    }();
 
-    if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+        return q.sortBy(sortBy).value();
+      }
+    };
   } else {
-    var _ret2 = function () {
-      var TEMP_COLS = cols.slice(0);
-      var outputLines = [];
+    var TEMP_COLS = cols.slice(0);
+    var outputLines = [];
 
-      return {
-        v: {
-          process: function process(filterFunc, line) {
-            line = parseLine(line);
+    return {
+      process: function process(filterFunc, line) {
+        line = parseLine(line);
 
-            // filter lines by date if requested
-            if ((start || end) && filterByDate(line, start, end)) return;
+        // filter lines by date if requested
+        if ((start || end) && filterByDate(line, start, end)) return;
 
-            line = _underscore2.default.map(TEMP_COLS, function (c) {
-              return line[c];
-            });
+        line = _underscore2.default.map(TEMP_COLS, function (c) {
+          return line[c];
+        });
 
-            // Drop the line if any of the columns requested does not exist in this line
-            if (line.some(function (c) {
-              return !c && c !== 0;
-            })) return;
+        // Drop the line if any of the columns requested does not exist in this line
+        if (line.some(function (c) {
+          return !c && c !== 0;
+        })) return;
 
-            if (filterFunc && !filterFunc(line)) return;
+        if (filterFunc && !filterFunc(line)) return;
 
-            var FIRSTLINE = _underscore2.default.first(outputLines);
+        var FIRSTLINE = _underscore2.default.first(outputLines);
 
-            // Add lines until the limit is reached
-            if (outputLines.length < limit) {
-              outputLines = splice(outputLines, line, sortBy);
-            }
-            // Drop lines immediately that are below the last item
-            // of currently sorted list. Otherwise add them and
-            // drop the last item.
-            else {
-                var compare = void 0;
-
-                if (typeof FIRSTLINE[sortBy] === 'number' && typeof line[sortBy] === 'number') {
-                  compare = FIRSTLINE[sortBy] < line[sortBy] ? -1 : 1;
-                } else {
-                  compare = String(FIRSTLINE[sortBy]).localeCompare(line[sortBy]);
-                }
-
-                if (!ascending && compare === 1 || ascending && compare === -1) return;
-
-                outputLines = splice(outputLines, line, sortBy);
-                outputLines.shift();
-              }
-          },
-          getResults: function getResults() {
-            return outputLines;
-          }
+        // Add lines until the limit is reached
+        if (outputLines.length < limit) {
+          outputLines = splice(outputLines, line, sortBy);
         }
-      };
-    }();
+        // Drop lines immediately that are below the last item
+        // of currently sorted list. Otherwise add them and
+        // drop the last item.
+        else {
+            var compare = void 0;
 
-    if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
+            if (typeof FIRSTLINE[sortBy] === 'number' && typeof line[sortBy] === 'number') {
+              compare = FIRSTLINE[sortBy] < line[sortBy] ? -1 : 1;
+            } else {
+              compare = String(FIRSTLINE[sortBy]).localeCompare(line[sortBy]);
+            }
+
+            if (!ascending && compare === 1 || ascending && compare === -1) return;
+
+            outputLines = splice(outputLines, line, sortBy);
+            outputLines.shift();
+          }
+      },
+      getResults: function getResults() {
+        return outputLines;
+      }
+    };
   }
 }
 
