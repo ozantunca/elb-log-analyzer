@@ -1,6 +1,6 @@
 {
   "name": "elb-log-analyzer",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Log Analyzer for AWS Elastic Load Balancer",
   "main": "./dist/lib.js",
   "bin": {
@@ -29,11 +29,11 @@
     "colors": "^1.1.2",
     "glob": "^7.1.1",
     "optimist": "^0.6.1",
-    "progress": "^1.1.8",
+    "progress": "^2.0.0",
     "underscore": "^1.8.3"
   },
   "scripts": {
-    "test": "snyk test && mocha test/index.js",
+    "test": "mocha test/index.js",
     "build": "babel src --out-dir dist",
     "dev": "babel src --out-dir dist --watch"
   },
@@ -41,15 +41,14 @@
   "homepage": "https://github.com/ozantunca/DispatcherJS",
   "devDependencies": {
     "babel-cli": "^6.18.0",
-    "babel-eslint": "^6.1.2",
+    "babel-eslint": "^8.2.2",
     "babel-plugin-transform-runtime": "^6.15.0",
     "babel-preset-es2015": "^6.18.0",
     "babel-preset-es2016-node5": "^1.1.2",
     "babel-preset-stage-0": "^6.16.0",
-    "chai": "^3.5.0",
-    "eslint": "^3.11.0",
+    "chai": "^4.1.2",
+    "eslint": "^4.18.1",
     "eslint-plugin-babel": "^4.0.0",
-    "mocha": "^3.2.0",
-    "snyk": "^1.20.0"
+    "mocha": "^5.0.1"
   }
 }
