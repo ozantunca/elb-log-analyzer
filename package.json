@@ -1,6 +1,6 @@
 {
   "name": "elb-log-analyzer",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Log Analyzer for AWS Elastic Load Balancer",
   "main": "./dist/lib.js",
   "bin": {
@@ -26,7 +26,7 @@
     "async": "^2.1.4",
     "babel-polyfill": "^6.16.0",
     "bluebird": "^3.4.6",
-    "colors": "^1.1.2",
+    "colors": "^1.2.1",
     "glob": "^7.1.1",
     "optimist": "^0.6.1",
     "progress": "^2.0.0",
@@ -49,6 +49,6 @@
     "chai": "^4.1.2",
     "eslint": "^4.18.1",
     "eslint-plugin-babel": "^4.0.0",
-    "mocha": "^5.0.1"
+    "mocha": "^5.0.4"
   }
 }
