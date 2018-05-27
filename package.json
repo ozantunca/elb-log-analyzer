@@ -21,31 +21,42 @@
     }
   ],
   "license": "MIT",
-  "preferGlobal": "true",
+  "preferGlobal": true,
   "dependencies": {
-    "async": "^2.1.4",
     "babel-polyfill": "^6.16.0",
     "bluebird": "^3.4.6",
-    "colors": "^1.2.5",
+    "colors": "^1.3.0",
     "glob": "^7.1.1",
     "optimist": "^0.6.1",
     "progress": "^2.0.0",
     "underscore": "^1.9.0"
   },
   "scripts": {
-    "test": "mocha test/index.js",
-    "build": "babel src --out-dir dist",
-    "dev": "babel src --out-dir dist --watch"
+    "test": "standardjs && mocha test/index.js",
+    "build": "tsc --noEmit && babel src/lib.ts src/cli.ts --out-dir dist --extensions \".ts,.tsx\"",
+    "dev": "tsc --noEmit && babel src/lib.ts src/cli.ts --out-dir dist --extensions \".ts,.tsx\" --watch"
   },
   "readmeFilename": "README.md",
   "homepage": "https://github.com/ozantunca/DispatcherJS",
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-plugin-transform-runtime": "^6.15.0",
-    "babel-preset-es2015": "^6.18.0",
-    "babel-preset-es2016-node5": "^1.1.2",
-    "babel-preset-stage-0": "^6.16.0",
+    "@babel/cli": "^7.0.0-beta.49",
+    "@babel/core": "^7.0.0-beta.49",
+    "@babel/plugin-proposal-class-properties": "^7.0.0-beta.49",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.49",
+    "@babel/plugin-transform-runtime": "^7.0.0-beta.49",
+    "@babel/preset-env": "^7.0.0-beta.49",
+    "@babel/preset-es2015": "^7.0.0-beta.49",
+    "@babel/preset-es2016": "^7.0.0-beta.49",
+    "@babel/preset-typescript": "^7.0.0-beta.49",
+    "@types/async": "^2.0.49",
+    "@types/bluebird": "^3.5.20",
+    "@types/glob": "^5.0.35",
+    "@types/progress": "^2.0.1",
+    "@types/underscore": "^1.8.8",
+    "async": "^2.6.1",
     "chai": "^4.1.2",
-    "mocha": "^5.0.4"
+    "mocha": "^5.2.0",
+    "standardjs": "^1.0.0-alpha",
+    "typescript": "^2.8.3"
   }
 }

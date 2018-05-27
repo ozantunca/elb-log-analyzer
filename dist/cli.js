@@ -1,41 +1,32 @@
 #! /usr/bin/env node
-
 'use strict';
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+require("babel-polyfill");
 
-require('babel-polyfill');
+var _lib = _interopRequireDefault(require("./lib"));
 
-var _lib = require('./lib.js');
+var _underscore = _interopRequireDefault(require("underscore"));
 
-var _lib2 = _interopRequireDefault(_lib);
+var _progress = _interopRequireDefault(require("progress"));
 
-var _underscore = require('underscore');
-
-var _underscore2 = _interopRequireDefault(_underscore);
-
-var _safe = require('colors/safe');
-
-var _safe2 = _interopRequireDefault(_safe);
-
-var _progress = require('progress');
-
-var _progress2 = _interopRequireDefault(_progress);
-
-var _fs = require('fs');
-
-var _fs2 = _interopRequireDefault(_fs);
+var _fs = _interopRequireDefault(require("fs"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan'];
+
+var colors = require('colors/safe');
 
 var options = require('optimist').argv,
     files = options._,
-    bar = void 0;
+    bar;
 
 if (options.version || options.v) {
-  console.log(JSON.parse(_fs2.default.readFileSync(__dirname + '/../package.json')).version);
+  console.log(JSON.parse(_fs.default.readFileSync(__dirname + '/../package.json').toString()).version);
   process.exit();
 }
 
@@ -71,38 +62,41 @@ options.sortBy = options.sortBy || options.s || 1;
 if (typeof options.sortBy !== 'number') {
   handler(new Error('--sortBy must be a number'));
   process.exit();
-}
+} // Assign default columns
 
-// Assign default columns
+
 options.cols = ['count', 'requested_resource'];
 options.prefixes = [];
 options.sortBy = options.sortBy - 1; // lib.js accepts sortBy starting with 0 while cli accepts starting with 1
-options.limit = options.limit || 10;
-options.ascending = options.a;
 
-// Parse prefixes and column choices
-_underscore2.default.each(options, function (arg, key) {
+options.limit = options.limit || 10;
+options.ascending = options.a; // Parse prefixes and column choices
+
+_underscore.default.each(options, function (arg, key) {
   var match = key.match(/^p(refix){0,1}([0-9]+)$/);
 
-  if (match) {
-    return options.prefixes[match[2] - 1] = arg;
+  if (match && !isNaN(Number(match[2]))) {
+    var index = Number(match[2]) - 1;
+    return options.prefixes[index] = arg;
   }
 
   match = key.match(/^c(ol){0,1}([0-9]+)$/);
 
-  if (match) {
-    options.cols[match[2] - 1] = arg;
+  if (match && !isNaN(Number(match[2]))) {
+    var _index = Number(match[2]) - 1;
+
+    options.cols[_index] = arg;
   }
 });
 
-(0, _lib2.default)(_extends({
+(0, _lib.default)(_objectSpread({
   files: files
 }, options, {
   onProgress: function onProgress() {
     bar.tick();
   },
   onStart: function onStart(filenames) {
-    bar = new _progress2.default(' processing [:bar] :percent :etas', {
+    bar = new _progress.default(' processing [:bar] :percent :etas', {
       complete: '=',
       incomplete: ' ',
       width: 30,
@@ -110,13 +104,16 @@ _underscore2.default.each(options, function (arg, key) {
     });
   }
 })).then(function (logs) {
-  _underscore2.default.each(logs, function (log, i) {
-    console.log(_safe2.default.white(i + 1) + ' - ' + _underscore2.default.map(log, function (l, index) {
-      return _safe2.default[USEFUL_COLORS[index % USEFUL_COLORS.length]](l);
-    }).join(_safe2.default.white(' - ')));
+  _underscore.default.each(logs, function (log, i) {
+    var coloredText = _underscore.default.map(log, function (l, index) {
+      var colorName = USEFUL_COLORS[index % USEFUL_COLORS.length];
+      return colors[colorName](l);
+    }).join(colors.white(' - '));
+
+    console.log(colors.white(String(i + 1)) + ' - ' + coloredText);
   });
 }).catch(handler);
 
 function handler(err) {
-  console.log(_safe2.default.red('An error occured') + ': ', _safe2.default.cyan(err));
+  console.log("".concat(colors.red('An error occured'), ": "), colors.cyan(err.toString()));
 }

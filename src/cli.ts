@@ -2,19 +2,20 @@
 'use strict';
 
 import 'babel-polyfill';
-import lib   from './lib.js';
+import lib   from './lib';
 import _     from 'underscore';
-import colors from 'colors/safe';
 import ProgressBar from 'progress';
 import fs from 'fs';
 
 const USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
 
+const colors: any = require('colors/safe')
 let options = require('optimist').argv
-  , files = options._, bar;
+  , files = options._
+  , bar: ProgressBar;
 
 if (options.version || options.v) {
-  console.log(JSON.parse(fs.readFileSync(__dirname + '/../package.json')).version);
+  console.log(JSON.parse(fs.readFileSync(__dirname + '/../package.json').toString()).version);
   process.exit();
 }
 
@@ -60,17 +61,19 @@ options.limit = options.limit || 10;
 options.ascending = options.a;
 
 // Parse prefixes and column choices
-_.each(options, function (arg, key) {
+_.each(options, function (arg: any, key: string) {
   let match = key.match(/^p(refix){0,1}([0-9]+)$/);
 
-  if (match) {
-    return options.prefixes[match[2] - 1] = arg;
+  if (match && !isNaN(Number(match[2]))) {
+    let index: number = Number(match[2]) - 1
+    return options.prefixes[index] = arg;
   }
 
   match = key.match(/^c(ol){0,1}([0-9]+)$/);
 
-  if (match) {
-    options.cols[match[2] - 1] = arg;
+  if (match && !isNaN(Number(match[2]))) {
+    let index: number = Number(match[2]) - 1
+    options.cols[index] = arg;
   }
 });
 
@@ -80,7 +83,7 @@ lib({
   onProgress () {
     bar.tick();
   },
-  onStart (filenames) {
+  onStart (filenames: string[]) {
     bar = new ProgressBar(' processing [:bar] :percent :etas', {
       complete: '=',
       incomplete: ' ',
@@ -89,13 +92,19 @@ lib({
     });
   }
 })
-.then(function (logs) {
-  _.each(logs, (log, i) => {
-    console.log(colors.white(i + 1) + ' - ' + _.map(log, (l, index) => colors[USEFUL_COLORS[index % USEFUL_COLORS.length]](l) ).join(colors.white(' - ')));
+.then(function (logs: any) {
+  _.each(logs, (log: any, i: number) => {
+    const coloredText: string = _.map<string[], string>(log, (l: string[], index: number) => {
+      const colorName: string = USEFUL_COLORS[index % USEFUL_COLORS.length]
+      return colors[colorName](l)
+    })
+    .join(colors.white(' - '))
+
+    console.log(colors.white(String(i + 1)) + ' - ' + coloredText);
   });
 })
 .catch(handler);
 
-function handler (err) {
-  console.log(`${colors.red('An error occured')}: `, colors.cyan(err));
+function handler (err: Error) {
+  console.log(`${colors.red('An error occured')}: `, colors.cyan(err.toString()));
 }

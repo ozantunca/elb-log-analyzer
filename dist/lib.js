@@ -1,157 +1,169 @@
 'use strict';
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = _default;
 
-require('babel-polyfill');
+require("babel-polyfill");
 
-var _fs = require('fs');
+var _fs = _interopRequireDefault(require("fs"));
 
-var _fs2 = _interopRequireDefault(_fs);
+var _readline = _interopRequireDefault(require("readline"));
 
-var _readline = require('readline');
+var _underscore = _interopRequireDefault(require("underscore"));
 
-var _readline2 = _interopRequireDefault(_readline);
-
-var _underscore = require('underscore');
-
-var _underscore2 = _interopRequireDefault(_underscore);
-
-var _glob = require('glob');
-
-var _glob2 = _interopRequireDefault(_glob);
-
-var _async = require('async');
-
-var _async2 = _interopRequireDefault(_async);
-
-var _bluebird = require('bluebird');
-
-var _bluebird2 = _interopRequireDefault(_bluebird);
+var _bluebird = _interopRequireDefault(require("bluebird"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var FIELDS = ['type', 'timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count', 'target_group_arn', 'trace_id', 'ssl_cipher', 'ssl_protocol'];
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
 
-module.exports = function (_ref) {
-  var _ref$logs = _ref.logs,
-      logs = _ref$logs === undefined ? [] : _ref$logs,
-      _ref$files = _ref.files,
-      files = _ref$files === undefined ? [] : _ref$files,
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } } function _next(value) { step("next", value); } function _throw(err) { step("throw", err); } _next(); }); }; }
+
+var glob = _bluebird.default.promisify(require('glob'));
+
+var ALL_FIELDS = ['type', 'timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time', 'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code', 'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count', 'target_group_arn', 'trace_id', 'ssl_cipher', 'ssl_protocol'];
+
+function _default(_ref) {
+  var _ref$files = _ref.files,
+      files = _ref$files === void 0 ? [] : _ref$files,
       _ref$cols = _ref.cols,
-      cols = _ref$cols === undefined ? ['count', 'requested_resource'] : _ref$cols,
+      cols = _ref$cols === void 0 ? ['count', 'requested_resource'] : _ref$cols,
       _ref$prefixes = _ref.prefixes,
-      prefixes = _ref$prefixes === undefined ? [] : _ref$prefixes,
+      prefixes = _ref$prefixes === void 0 ? [] : _ref$prefixes,
       _ref$sortBy = _ref.sortBy,
-      sortBy = _ref$sortBy === undefined ? 0 : _ref$sortBy,
+      sortBy = _ref$sortBy === void 0 ? 0 : _ref$sortBy,
       _ref$limit = _ref.limit,
-      limit = _ref$limit === undefined ? 10 : _ref$limit,
+      limit = _ref$limit === void 0 ? 10 : _ref$limit,
       _ref$ascending = _ref.ascending,
-      ascending = _ref$ascending === undefined ? false : _ref$ascending,
+      ascending = _ref$ascending === void 0 ? false : _ref$ascending,
       start = _ref.start,
       end = _ref.end,
       _ref$onProgress = _ref.onProgress,
-      onProgress = _ref$onProgress === undefined ? function () {} : _ref$onProgress,
+      onProgress = _ref$onProgress === void 0 ? function () {} : _ref$onProgress,
       _ref$onStart = _ref.onStart,
-      onStart = _ref$onStart === undefined ? function () {} : _ref$onStart;
+      onStart = _ref$onStart === void 0 ? function () {} : _ref$onStart;
+  // collect file names
+  return _bluebird.default.map(files,
+  /*#__PURE__*/
+  function () {
+    var _ref2 = _asyncToGenerator(
+    /*#__PURE__*/
+    regeneratorRuntime.mark(function _callee(fileName) {
+      var fileList;
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _context.next = 2;
+              return glob(fileName + '/**/*', {
+                nodir: true
+              });
 
-  return new _bluebird2.default(function (pass, fail) {
-    // collect file names
-    _async2.default.map(files, function (file, next) {
-      _async2.default.auto({
-        // Check if the file is a directory
-        directory: function directory(next) {
-          (0, _glob2.default)(file + '/**/*', { nodir: true }, next);
-        },
+            case 2:
+              fileList = _context.sent;
 
+              if (!(!fileList || !fileList.length)) {
+                _context.next = 9;
+                break;
+              }
 
-        // If it's not directory, pass single file
-        singleFile: ['directory', function (results, next) {
-          if (results.directory && !!results.directory.length) {
-            return next(null, results.directory);
+              _context.next = 6;
+              return glob(fileName, {
+                nodir: true
+              });
+
+            case 6:
+              fileList = _context.sent;
+
+              if (!(!fileList || !fileList.length)) {
+                _context.next = 9;
+                break;
+              }
+
+              throw new Error("No file with name '".concat(fileName, "' found."));
+
+            case 9:
+              return _context.abrupt("return", fileList);
+
+            case 10:
+            case "end":
+              return _context.stop();
           }
-
-          (0, _glob2.default)(file, next);
-        }]
-      }, function (err, results) {
-        if (err) return next(err);
-        if (!results.singleFile.length) return next('No file with name \'' + file + '\' found.');
-        next(null, results.singleFile);
-      });
-    }, function (err, filenames) {
-      if (err) return fail(err);
-
-      filenames = _underscore2.default.flatten(filenames);
-
-      // Processing starts
-      onStart(filenames);
-
-      // Fail when user requests a column that is not support by the analyzer
-      if (cols.some(function (c) {
-        return !~FIELDS.indexOf(c);
-      })) {
-        return fail('One or more of the requested columns does not exist.');
-      }
-
-      // Fail when user gives a sortBy value for a non-existent column
-      if (sortBy < 0 || sortBy > cols.length - 1) {
-        return fail('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
-      }
-
-      var processor = generateProcessor({
-        cols: cols,
-        sortBy: sortBy,
-        limit: limit,
-        ascending: ascending,
-        prefixes: prefixes,
-        start: start,
-        end: end
-      });
-
-      var filterFunc = generateFilter(prefixes.slice(), cols);
-
-      parseFiles(filenames, processor.process.bind(processor, filterFunc), onProgress).then(function () {
-        var logs = processor.getResults();
-
-        if (ascending) {
-          logs = logs.slice(0, limit);
-        } else {
-          logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse();
         }
+      }, _callee, this);
+    }));
 
-        pass(logs);
-      }).catch(fail);
+    return function (_x) {
+      return _ref2.apply(this, arguments);
+    };
+  }()).then(function (results) {
+    var fileNames = _underscore.default.flatten(results); // Processing starts
+
+
+    onStart(fileNames); // Fail when user requests a column that is not support by the analyzer
+
+    if (cols.some(function (c) {
+      return !~ALL_FIELDS.indexOf(c);
+    })) {
+      throw new Error('One or more of the requested columns does not exist.');
+    } // Fail when user gives a sortBy value for a non-existent column
+
+
+    if (sortBy < 0 || sortBy > cols.length - 1) {
+      throw new Error('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
+    }
+
+    var processor = generateProcessor({
+      requestedColumns: cols,
+      sortBy: sortBy,
+      limit: limit,
+      ascending: ascending,
+      prefixes: prefixes,
+      start: start,
+      end: end
+    });
+    var filterFunc = generateFilter(prefixes.slice(), cols);
+    return parseFiles(fileNames, processor.process.bind(processor, filterFunc), onProgress).then(function () {
+      var logs = processor.getResults();
+
+      if (ascending) {
+        logs = logs.slice(0, limit);
+      } else {
+        logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse();
+      }
+
+      return logs;
     });
   });
-};
-
-// Reads files line by line and passes them
+} // Reads files line by line and passes them
 // to the processor function
-function parseFiles(files, processFunc, onProgress) {
-  return new _bluebird2.default(function (pass, fail) {
-    // Loop through files
-    _async2.default.map(files, function (file, next) {
-      var RL = _readline2.default.createInterface({
-        terminal: false,
-        input: _fs2.default.createReadStream(file)
-      });
 
-      // Read file contents
+
+function parseFiles(fileNames, processFunc, onProgress) {
+  return _bluebird.default.map(fileNames, function (fileName) {
+    return new _bluebird.default(function (pass) {
+      var RL = _readline.default.createInterface({
+        terminal: false,
+        input: _fs.default.createReadStream(fileName)
+      }); // Read file contents
+
+
       RL.on('line', function (line) {
         processFunc(line);
       });
-
       RL.on('close', function () {
         onProgress();
-        next();
+        pass();
       });
-    }, function (err) {
-      if (err) return fail(err);
-      pass();
     });
   });
-}
+} // Generates a filter function depending on prefixes
 
-// Generates a filter function depending on prefixes
+
 function generateFilter(prefixes, cols) {
   var COUNT_INDEX = cols.indexOf('count');
 
@@ -160,10 +172,9 @@ function generateFilter(prefixes, cols) {
   }
 
   if (prefixes.length === 0) return null;
-
   return function (line) {
-    return _underscore2.default.every(prefixes, function (p, i) {
-      return !p && p !== 0 || // no prefix for this index
+    return _underscore.default.every(prefixes, function (p, i) {
+      return !p && p !== '0' || // no prefix for this index
       line[i] && // line has value in that index
       line[i].toString().startsWith(p);
     } // line startsWith given prefix
@@ -171,51 +182,55 @@ function generateFilter(prefixes, cols) {
   };
 }
 
-function generateProcessor(_ref2) {
-  var cols = _ref2.cols,
-      sortBy = _ref2.sortBy,
-      ascending = _ref2.ascending,
-      limit = _ref2.limit,
-      prefixes = _ref2.prefixes,
-      start = _ref2.start,
-      end = _ref2.end;
-
-  var COUNT_INDEX = cols.indexOf('count');
+function generateProcessor(_ref3) {
+  var requestedColumns = _ref3.requestedColumns,
+      sortBy = _ref3.sortBy,
+      ascending = _ref3.ascending,
+      limit = _ref3.limit,
+      prefixes = _ref3.prefixes,
+      start = _ref3.start,
+      end = _ref3.end;
+  var COUNT_INDEX = requestedColumns.indexOf('count');
 
   if (COUNT_INDEX > -1) {
     var counts = {};
-    var tempCols = cols.slice(0);
-
+    var tempCols = requestedColumns.slice(0);
     tempCols.splice(COUNT_INDEX, 1);
-
     return {
       process: function process(filterFunc, line) {
-        line = parseLine(line);
+        var lineObj = parseLine(line);
 
-        if (!line) return;
+        if (!lineObj) {
+          return;
+        } // filter lines by date if requested
 
-        // filter lines by date if requested
-        if ((start || end) && filterByDate(line, start, end)) return;
 
-        line = _underscore2.default.map(tempCols, function (c) {
-          return line[c];
-        });
+        if ((start || end) && filterByDate(lineObj, start, end)) {
+          return;
+        }
 
-        // Drop the line if any of the columns requested does not exist in this line
-        if (line.some(function (c) {
-          return !c && c !== 0;
-        })) return;
+        lineObj = _underscore.default.map(tempCols, function (c) {
+          return lineObj[c];
+        }); // Drop the line if any of the columns requested does not exist in this line
 
-        // Count column is not in 'line' at this moment
+        if (lineObj.some(function (c) {
+          return !c && c !== '0';
+        })) {
+          return;
+        } // Count column is not in 'line' at this moment
         // so we are defining a new variable that includes it
-        if (filterFunc && !filterFunc(line)) return;
 
-        // stringifying columns serves as a multi-column group_by
-        var LINESTRING = JSON.stringify(line);
+
+        if (filterFunc && !filterFunc(lineObj)) {
+          return;
+        } // stringifying columns serves as a multi-column group_by
+
+
+        var LINESTRING = JSON.stringify(lineObj);
         counts[LINESTRING] = counts[LINESTRING] ? counts[LINESTRING] + 1 : 1;
       },
       getResults: function getResults() {
-        var q = _underscore2.default.chain(counts).pairs().map(function (l) {
+        var q = _underscore.default.chain(counts).pairs().map(function (l) {
           var COUNT = l[1];
           l = JSON.parse(l[0]);
           l.splice(COUNT_INDEX, 0, COUNT);
@@ -228,52 +243,58 @@ function generateProcessor(_ref2) {
           });
         }
 
-        return q.sortBy(sortBy).value();
+        return q.sortBy(sortBy.toString()).value();
       }
     };
   } else {
-    var TEMP_COLS = cols.slice(0);
+    var TEMP_COLS = requestedColumns.slice(0);
     var outputLines = [];
-
     return {
       process: function process(filterFunc, line) {
-        line = parseLine(line);
+        var lineObj = parseLine(line); // filter lines by date if requested
 
-        // filter lines by date if requested
-        if ((start || end) && filterByDate(line, start, end)) return;
-
-        line = _underscore2.default.map(TEMP_COLS, function (c) {
-          return line[c];
-        });
-
-        // Drop the line if any of the columns requested does not exist in this line
-        if (line.some(function (c) {
-          return !c && c !== 0;
-        })) return;
-
-        if (filterFunc && !filterFunc(line)) return;
-
-        var FIRSTLINE = _underscore2.default.first(outputLines);
-
-        // Add lines until the limit is reached
-        if (outputLines.length < limit) {
-          outputLines = splice(outputLines, line, sortBy);
+        if ((start || end) && filterByDate(lineObj, start, end)) {
+          return;
         }
-        // Drop lines immediately that are below the last item
+
+        lineObj = _underscore.default.map(TEMP_COLS, function (c) {
+          return lineObj[c];
+        }); // Drop the line if any of the columns requested does not exist in this line
+
+        if (lineObj.some(function (c) {
+          return !c && c !== '0';
+        })) {
+          return;
+        }
+
+        if (filterFunc && !filterFunc(lineObj)) {
+          return;
+        }
+
+        var FIRSTLINE = _underscore.default.first(outputLines); // Add lines until the limit is reached
+
+
+        if (outputLines.length < limit) {
+          outputLines = splice(outputLines, lineObj, sortBy);
+        } // Drop lines immediately that are below the last item
         // of currently sorted list. Otherwise add them and
         // drop the last item.
         else {
-            var compare = void 0;
+            var compare;
 
-            if (typeof FIRSTLINE[sortBy] === 'number' && typeof line[sortBy] === 'number') {
-              compare = FIRSTLINE[sortBy] < line[sortBy] ? -1 : 1;
-            } else {
-              compare = String(FIRSTLINE[sortBy]).localeCompare(line[sortBy]);
+            if (FIRSTLINE) {
+              if (typeof FIRSTLINE[sortBy] === 'number' && typeof lineObj[sortBy] === 'number') {
+                compare = FIRSTLINE[sortBy] < lineObj[sortBy] ? -1 : 1;
+              } else {
+                compare = String(FIRSTLINE[sortBy]).localeCompare(lineObj[sortBy]);
+              }
             }
 
-            if (!ascending && compare === 1 || ascending && compare === -1) return;
+            if (!ascending && compare === 1 || ascending && compare === -1) {
+              return;
+            }
 
-            outputLines = splice(outputLines, line, sortBy);
+            outputLines = splice(outputLines, lineObj, sortBy);
             outputLines.shift();
           }
       },
@@ -282,12 +303,12 @@ function generateProcessor(_ref2) {
       }
     };
   }
-}
+} // sort while inserting
 
-// sort while inserting
+
 function splice(lines, newLine, sortBy) {
   var l = lines.length,
-      compare = void 0;
+      compare;
 
   while (l--) {
     if (typeof lines[l][sortBy] === 'number' && typeof newLine[sortBy] === 'number') {
@@ -301,19 +322,17 @@ function splice(lines, newLine, sortBy) {
 
   lines.splice(l + 1, 0, newLine);
   return lines;
-}
+} // line parser function
+// @todo: will be customisable to be used for logs other than ELB's
 
-// line parser function
-// @todo: will be customisable to be used for logs
-// other than ELB's
+
 function parseLine(line) {
   if (!line || line == '') {
     return false;
   }
 
   var ATTRIBUTES = line.match(/[^\s"']+|"([^"]*)"/gi);
-  var user_agent = '',
-      parsedLine = {};
+  var parsedLine = {};
 
   if (!ATTRIBUTES) {
     return false;
@@ -323,7 +342,7 @@ function parseLine(line) {
     parsedLine.type = ATTRIBUTES.shift();
   }
 
-  parsedLine = _extends({}, parsedLine, {
+  parsedLine = _objectSpread({}, parsedLine, {
     'timestamp': ATTRIBUTES[0],
     'elb': ATTRIBUTES[1],
     'client': String(ATTRIBUTES[2]).split(':')[0],
@@ -346,7 +365,6 @@ function parseLine(line) {
     'target_group_arn': ATTRIBUTES[15],
     'trace_id': ATTRIBUTES[16]
   });
-
   return parsedLine;
 }
 
