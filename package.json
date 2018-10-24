@@ -24,39 +24,51 @@
   "preferGlobal": true,
   "dependencies": {
     "babel-polyfill": "^6.16.0",
-    "bluebird": "^3.4.6",
-    "colors": "^1.3.0",
-    "glob": "^7.1.1",
-    "optimist": "^0.6.1",
-    "progress": "^2.0.0",
-    "underscore": "^1.9.0"
+    "bluebird": "^3.5.2",
+    "colors": "^1.3.2",
+    "glob": "^7.1.3",
+    "minimist": "^1.2.0",
+    "progress": "^2.0.1",
+    "underscore": "^1.9.1"
   },
   "scripts": {
-    "test": "standardjs && mocha test/index.js",
+    "test": "standard --parser typescript-eslint-parser --plugin typescript 'src/*.ts' && standard --env mocha 'test/*.js' && mocha test/index.js",
+    "standard": "standard --env mocha --fix 'test/*.js'",
     "build": "tsc --noEmit && babel src/lib.ts src/cli.ts --out-dir dist --extensions \".ts,.tsx\"",
     "dev": "tsc --noEmit && babel src/lib.ts src/cli.ts --out-dir dist --extensions \".ts,.tsx\" --watch"
   },
   "readmeFilename": "README.md",
-  "homepage": "https://github.com/ozantunca/DispatcherJS",
+  "homepage": "https://github.com/ozantunca/elb-log-analyzer",
   "devDependencies": {
-    "@babel/cli": "^7.0.0-beta.49",
-    "@babel/core": "^7.0.0-beta.49",
-    "@babel/plugin-proposal-class-properties": "^7.0.0-beta.49",
-    "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.49",
-    "@babel/plugin-transform-runtime": "^7.0.0-beta.49",
-    "@babel/preset-env": "^7.0.0-beta.49",
-    "@babel/preset-es2015": "^7.0.0-beta.49",
-    "@babel/preset-es2016": "^7.0.0-beta.49",
-    "@babel/preset-typescript": "^7.0.0-beta.49",
-    "@types/async": "^2.0.49",
-    "@types/bluebird": "^3.5.20",
-    "@types/glob": "^5.0.35",
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
+    "@babel/plugin-transform-runtime": "^7.1.0",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-typescript": "^7.1.0",
+    "@types/async": "^2.0.50",
+    "@types/bluebird": "^3.5.24",
+    "@types/glob": "^7.1.1",
+    "@types/minimist": "^1.2.0",
     "@types/progress": "^2.0.1",
-    "@types/underscore": "^1.8.8",
+    "@types/underscore": "^1.8.9",
     "async": "^2.6.1",
-    "chai": "^4.1.2",
+    "chai": "^4.2.0",
+    "eslint-plugin-typescript": "^0.12.0",
     "mocha": "^5.2.0",
-    "standardjs": "^1.0.0-alpha",
-    "typescript": "^2.8.3"
+    "standard": "^12.0.1",
+    "typescript": "^3.1.3",
+    "typescript-eslint-parser": "^20.0.0"
+  },
+  "standard": {
+    "ignore": [
+      "dist/**",
+      "src/types.ts"
+    ],
+    "parser": "typescript-eslint-parser",
+    "plugins": [
+      "typescript"
+    ]
   }
 }

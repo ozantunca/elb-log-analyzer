@@ -21,7 +21,9 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } } function _next(value) { step("next", value); } function _throw(err) { step("throw", err); } _next(); }); }; }
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
 var glob = _bluebird.default.promisify(require('glob'));
 
@@ -30,8 +32,8 @@ var ALL_FIELDS = ['type', 'timestamp', 'elb', 'client:port', 'client', 'backend:
 function _default(_ref) {
   var _ref$files = _ref.files,
       files = _ref$files === void 0 ? [] : _ref$files,
-      _ref$cols = _ref.cols,
-      cols = _ref$cols === void 0 ? ['count', 'requested_resource'] : _ref$cols,
+      _ref$requestedColumns = _ref.requestedColumns,
+      requestedColumns = _ref$requestedColumns === void 0 ? ['count', 'requested_resource'] : _ref$requestedColumns,
       _ref$prefixes = _ref.prefixes,
       prefixes = _ref$prefixes === void 0 ? [] : _ref$prefixes,
       _ref$sortBy = _ref.sortBy,
@@ -106,19 +108,19 @@ function _default(_ref) {
 
     onStart(fileNames); // Fail when user requests a column that is not support by the analyzer
 
-    if (cols.some(function (c) {
+    if (requestedColumns.some(function (c) {
       return !~ALL_FIELDS.indexOf(c);
     })) {
       throw new Error('One or more of the requested columns does not exist.');
     } // Fail when user gives a sortBy value for a non-existent column
 
 
-    if (sortBy < 0 || sortBy > cols.length - 1) {
+    if (sortBy < 0 || sortBy > requestedColumns.length - 1) {
       throw new Error('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
     }
 
     var processor = generateProcessor({
-      requestedColumns: cols,
+      requestedColumns: requestedColumns,
       sortBy: sortBy,
       limit: limit,
       ascending: ascending,
@@ -126,7 +128,7 @@ function _default(_ref) {
       start: start,
       end: end
     });
-    var filterFunc = generateFilter(prefixes.slice(), cols);
+    var filterFunc = generateFilter(prefixes.slice(), requestedColumns);
     return parseFiles(fileNames, processor.process.bind(processor, filterFunc), onProgress).then(function () {
       var logs = processor.getResults();
 
@@ -145,7 +147,7 @@ function _default(_ref) {
 
 function parseFiles(fileNames, processFunc, onProgress) {
   return _bluebird.default.map(fileNames, function (fileName) {
-    return new _bluebird.default(function (pass) {
+    return new _bluebird.default(function (resolve) {
       var RL = _readline.default.createInterface({
         terminal: false,
         input: _fs.default.createReadStream(fileName)
@@ -157,21 +159,24 @@ function parseFiles(fileNames, processFunc, onProgress) {
       });
       RL.on('close', function () {
         onProgress();
-        pass();
+        resolve();
       });
     });
   });
 } // Generates a filter function depending on prefixes
 
 
-function generateFilter(prefixes, cols) {
-  var COUNT_INDEX = cols.indexOf('count');
+function generateFilter(prefixes, requestedcolumns) {
+  var COUNT_INDEX = requestedcolumns.indexOf('count');
 
   if (COUNT_INDEX > -1) {
     prefixes.splice(COUNT_INDEX, 1);
   }
 
-  if (prefixes.length === 0) return null;
+  if (prefixes.length === 0) {
+    return null;
+  }
+
   return function (line) {
     return _underscore.default.every(prefixes, function (p, i) {
       return !p && p !== '0' || // no prefix for this index
@@ -276,27 +281,27 @@ function generateProcessor(_ref3) {
 
         if (outputLines.length < limit) {
           outputLines = splice(outputLines, lineObj, sortBy);
-        } // Drop lines immediately that are below the last item
-        // of currently sorted list. Otherwise add them and
-        // drop the last item.
-        else {
-            var compare;
+        } else {
+          // Drop lines immediately that are below the last item
+          // of currently sorted list. Otherwise add them and
+          // drop the last item.
+          var compare;
 
-            if (FIRSTLINE) {
-              if (typeof FIRSTLINE[sortBy] === 'number' && typeof lineObj[sortBy] === 'number') {
-                compare = FIRSTLINE[sortBy] < lineObj[sortBy] ? -1 : 1;
-              } else {
-                compare = String(FIRSTLINE[sortBy]).localeCompare(lineObj[sortBy]);
-              }
+          if (FIRSTLINE) {
+            if (typeof FIRSTLINE[sortBy] === 'number' && typeof lineObj[sortBy] === 'number') {
+              compare = FIRSTLINE[sortBy] < lineObj[sortBy] ? -1 : 1;
+            } else {
+              compare = String(FIRSTLINE[sortBy]).localeCompare(lineObj[sortBy]);
             }
-
-            if (!ascending && compare === 1 || ascending && compare === -1) {
-              return;
-            }
-
-            outputLines = splice(outputLines, lineObj, sortBy);
-            outputLines.shift();
           }
+
+          if (!ascending && compare === 1 || ascending && compare === -1) {
+            return;
+          }
+
+          outputLines = splice(outputLines, lineObj, sortBy);
+          outputLines.shift();
+        }
       },
       getResults: function getResults() {
         return outputLines;
@@ -307,8 +312,8 @@ function generateProcessor(_ref3) {
 
 
 function splice(lines, newLine, sortBy) {
-  var l = lines.length,
-      compare;
+  var l = lines.length;
+  var compare;
 
   while (l--) {
     if (typeof lines[l][sortBy] === 'number' && typeof newLine[sortBy] === 'number') {
@@ -317,7 +322,9 @@ function splice(lines, newLine, sortBy) {
       compare = String(lines[l][sortBy]).localeCompare(newLine[sortBy]);
     }
 
-    if (compare < 0) break;
+    if (compare < 0) {
+      break;
+    }
   }
 
   lines.splice(l + 1, 0, newLine);
@@ -327,7 +334,7 @@ function splice(lines, newLine, sortBy) {
 
 
 function parseLine(line) {
-  if (!line || line == '') {
+  if (!line || line === '') {
     return false;
   }
 

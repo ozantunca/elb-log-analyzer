@@ -1,20 +1,28 @@
-'use strict';
+'use strict'
 
-import 'babel-polyfill';
-import fs       from 'fs';
-import readline from 'readline';
-import _        from 'underscore';
-import Promise  from 'bluebird';
+import 'babel-polyfill'
+import fs from 'fs'
+import readline from 'readline'
+import _ from 'underscore'
+import Promise from 'bluebird'
 
 const glob: Function = Promise.promisify(require('glob'))
 const ALL_FIELDS = ['type', 'timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time',
-                'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code',
-                'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count',
-                'target_group_arn', 'trace_id', 'ssl_cipher', 'ssl_protocol'];
+  'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code',
+  'received_bytes', 'sent_bytes', 'request', 'requested_resource', 'user_agent', 'total_time', 'count',
+  'target_group_arn', 'trace_id', 'ssl_cipher', 'ssl_protocol']
 
 export default function ({
-  files = [], cols = ['count', 'requested_resource'], prefixes = [],
-  sortBy = 0, limit = 10, ascending = false, start, end, onProgress = () => {}, onStart = () => {}
+  files = [],
+  requestedColumns = ['count', 'requested_resource'],
+  prefixes = [],
+  sortBy = 0,
+  limit = 10,
+  ascending = false,
+  start,
+  end,
+  onProgress = () => {},
+  onStart = () => {}
 } : LibraryOptions) {
   // collect file names
   return Promise.map(files, async (fileName: string) => {
@@ -28,202 +36,206 @@ export default function ({
     }
     return fileList
   })
-  .then((results) => {
-    const fileNames = _.flatten(results);
+    .then(results => {
+      const fileNames = _.flatten(results)
 
-    // Processing starts
-    onStart(fileNames);
+      // Processing starts
+      onStart(fileNames)
 
-    // Fail when user requests a column that is not support by the analyzer
-    if (cols.some(c => !~ALL_FIELDS.indexOf(c))) {
-      throw new Error('One or more of the requested columns does not exist.');
-    }
-
-    // Fail when user gives a sortBy value for a non-existent column
-    if (sortBy < 0 || sortBy > cols.length - 1) {
-      throw new Error('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.');
-    }
-
-    const processor = generateProcessor({
-      requestedColumns: cols,
-      sortBy,
-      limit,
-      ascending,
-      prefixes,
-      start,
-      end,
-    });
-
-    const filterFunc = generateFilter(prefixes.slice(), cols);
-
-    return parseFiles(fileNames, processor.process.bind(processor, filterFunc), onProgress)
-    .then(function () {
-      let logs = processor.getResults();
-
-      if (ascending) {
-        logs = logs.slice(0, limit);
-      } else {
-        logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse();
+      // Fail when user requests a column that is not support by the analyzer
+      if (requestedColumns.some(c => !~ALL_FIELDS.indexOf(c))) {
+        throw new Error('One or more of the requested columns does not exist.')
       }
-      return logs
+
+      // Fail when user gives a sortBy value for a non-existent column
+      if (sortBy < 0 || sortBy > requestedColumns.length - 1) {
+        throw new Error('Invalid \'sortBy\' parameter. \'sortBy\' cannot be lower than 0 or greater than number of columns.')
+      }
+
+      const processor = generateProcessor({
+        requestedColumns,
+        sortBy,
+        limit,
+        ascending,
+        prefixes,
+        start,
+        end
+      })
+
+      const filterFunc = generateFilter(prefixes.slice(), requestedColumns)
+
+      return parseFiles(fileNames, processor.process.bind(processor, filterFunc), onProgress)
+        .then(function () {
+          let logs = processor.getResults()
+
+          if (ascending) {
+            logs = logs.slice(0, limit)
+          } else {
+            logs = logs.slice(logs.length > limit ? logs.length - limit : 0).reverse()
+          }
+          return logs
+        })
     })
-  })
 }
 
 // Reads files line by line and passes them
 // to the processor function
-function parseFiles(fileNames: string[], processFunc: CallbackFunction, onProgress: CallbackFunction) {
+function parseFiles (
+  fileNames: string[],
+  processFunc: CallbackFunction,
+  onProgress: CallbackFunction
+) {
   return Promise.map(fileNames, (fileName: string) =>
-    new Promise((pass: CallbackFunction) => {
+    new Promise((resolve: CallbackFunction) => {
       const RL = readline.createInterface({
         terminal: false,
         input: fs.createReadStream(fileName)
-      });
+      })
 
       // Read file contents
       RL.on('line', (line: string) => {
-        processFunc(line);
-      });
+        processFunc(line)
+      })
 
       RL.on('close', () => {
-        onProgress();
-        pass();
-      });
+        onProgress()
+        resolve()
+      })
     })
   )
 }
 
 // Generates a filter function depending on prefixes
-function generateFilter (prefixes: string[], cols: string[]) {
-  const COUNT_INDEX = cols.indexOf('count');
+function generateFilter (prefixes: string[], requestedcolumns: string[]) {
+  const COUNT_INDEX = requestedcolumns.indexOf('count')
 
   if (COUNT_INDEX > -1) {
-    prefixes.splice(COUNT_INDEX, 1);
+    prefixes.splice(COUNT_INDEX, 1)
   }
 
-  if (prefixes.length === 0) return null;
+  if (prefixes.length === 0) {
+    return null
+  }
 
   return (line: Array<any>) =>
     _.every(prefixes, (p, i) =>
-      !p && p !== '0' || // no prefix for this index
-      line[i] && // line has value in that index
-      line[i].toString().startsWith(p) // line startsWith given prefix
-    );
+      (!p && p !== '0') || // no prefix for this index
+      (line[i] && // line has value in that index
+      line[i].toString().startsWith(p)) // line startsWith given prefix
+    )
 }
 
 function generateProcessor ({ requestedColumns, sortBy, ascending, limit, prefixes, start, end } : ParserOptions) {
-  const COUNT_INDEX = requestedColumns.indexOf('count');
+  const COUNT_INDEX = requestedColumns.indexOf('count')
 
   if (COUNT_INDEX > -1) {
-    let counts: any = {};
-    let tempCols = requestedColumns.slice(0);
+    let counts: any = {}
+    let tempCols = requestedColumns.slice(0)
 
-    tempCols.splice(COUNT_INDEX, 1);
+    tempCols.splice(COUNT_INDEX, 1)
 
     return {
-      process (filterFunc: CallbackFunction, line: string) {
-        let lineObj: any = parseLine(line);
+      process (filterFunc: FilterFunction, line: string) {
+        let lineObj: any = parseLine(line)
 
         if (!lineObj) {
-          return;
+          return
         }
 
         // filter lines by date if requested
         if ((start || end) && filterByDate(lineObj, start, end)) {
-          return;
+          return
         }
 
-        lineObj = _.map(tempCols, c => lineObj[c]);
+        lineObj = _.map(tempCols, c => lineObj[c])
 
         // Drop the line if any of the columns requested does not exist in this line
         if (lineObj.some((c: string) => !c && c !== '0')) {
-          return;
+          return
         }
 
         // Count column is not in 'line' at this moment
         // so we are defining a new variable that includes it
         if (filterFunc && !filterFunc(lineObj)) {
-          return;
+          return
         }
 
         // stringifying columns serves as a multi-column group_by
-        const LINESTRING = JSON.stringify(lineObj);
-        counts[LINESTRING] = counts[LINESTRING] ? counts[LINESTRING] + 1 : 1;
+        const LINESTRING = JSON.stringify(lineObj)
+        counts[LINESTRING] = counts[LINESTRING] ? counts[LINESTRING] + 1 : 1
       },
 
       getResults () {
         let q = _.chain(counts)
           .pairs()
           .map(function (l) {
-            const COUNT = l[1];
-            l = JSON.parse(l[0]);
-            l.splice(COUNT_INDEX, 0, COUNT);
-            return l;
-          });
+            const COUNT = l[1]
+            l = JSON.parse(l[0])
+            l.splice(COUNT_INDEX, 0, COUNT)
+            return l
+          })
 
         if (prefixes && prefixes[COUNT_INDEX]) {
-          q = q.filter(line => line[COUNT_INDEX].toString().startsWith(prefixes[COUNT_INDEX]));
+          q = q.filter(line => line[COUNT_INDEX].toString().startsWith(prefixes[COUNT_INDEX]))
         }
 
-        return q.sortBy(sortBy.toString()).value();
+        return q.sortBy(sortBy.toString()).value()
       }
-    };
-  }
-  else {
-    const TEMP_COLS = requestedColumns.slice(0);
-    let outputLines: string[][] = [];
+    }
+  } else {
+    const TEMP_COLS = requestedColumns.slice(0)
+    let outputLines: string[][] = []
 
     return {
       process (filterFunc: Function, line: string) {
-        let lineObj: any = parseLine(line);
+        let lineObj: any = parseLine(line)
 
         // filter lines by date if requested
         if ((start || end) && filterByDate(lineObj, start, end)) {
-          return;
+          return
         }
 
-        lineObj = _.map(TEMP_COLS, c => lineObj[c]);
+        lineObj = _.map(TEMP_COLS, c => lineObj[c])
 
         // Drop the line if any of the columns requested does not exist in this line
         if (lineObj.some((c: string) => !c && c !== '0')) {
-          return;
+          return
         }
 
         if (filterFunc && !filterFunc(lineObj)) {
-          return;
+          return
         }
 
-        const FIRSTLINE = _.first(outputLines);
+        const FIRSTLINE = _.first(outputLines)
 
         // Add lines until the limit is reached
         if (outputLines.length < limit) {
-          outputLines = splice( outputLines, lineObj, sortBy );
-        }
-        // Drop lines immediately that are below the last item
-        // of currently sorted list. Otherwise add them and
-        // drop the last item.
-        else {
-          let compare;
+          outputLines = splice(outputLines, lineObj, sortBy)
+        } else {
+          // Drop lines immediately that are below the last item
+          // of currently sorted list. Otherwise add them and
+          // drop the last item.
+          let compare
 
           if (FIRSTLINE) {
             if (typeof FIRSTLINE[sortBy] === 'number' && typeof lineObj[sortBy] === 'number') {
-              compare = FIRSTLINE[sortBy] < lineObj[sortBy] ? -1 : 1;
+              compare = FIRSTLINE[sortBy] < lineObj[sortBy] ? -1 : 1
             } else {
-              compare = String(FIRSTLINE[sortBy]).localeCompare(lineObj[sortBy]);
+              compare = String(FIRSTLINE[sortBy]).localeCompare(lineObj[sortBy])
             }
           }
 
-          if (!ascending && compare === 1 || ascending && compare === -1) {
-            return;
+          if ((!ascending && compare === 1) || (ascending && compare === -1)) {
+            return
           }
 
-          outputLines = splice(outputLines, lineObj, sortBy);
-          outputLines.shift();
+          outputLines = splice(outputLines, lineObj, sortBy)
+          outputLines.shift()
         }
       },
 
       getResults () {
-        return outputLines;
+        return outputLines
       }
     }
   }
@@ -232,35 +244,37 @@ function generateProcessor ({ requestedColumns, sortBy, ascending, limit, prefix
 // sort while inserting
 function splice (lines: string[][], newLine: string[], sortBy: number) {
   let l = lines.length
-    , compare;
+
+  let compare
 
   while (l--) {
     if (typeof lines[l][sortBy] === 'number' && typeof newLine[sortBy] === 'number') {
-      compare = lines[l][sortBy] < newLine[sortBy] ? -1 : 1;
+      compare = lines[l][sortBy] < newLine[sortBy] ? -1 : 1
     } else {
-      compare = String(lines[l][sortBy]).localeCompare(newLine[sortBy]);
+      compare = String(lines[l][sortBy]).localeCompare(newLine[sortBy])
     }
 
-    if (compare < 0)
-      break;
+    if (compare < 0) {
+      break
+    }
   }
 
-  lines.splice(l + 1, 0, newLine);
-  return lines;
+  lines.splice(l + 1, 0, newLine)
+  return lines
 }
 
 // line parser function
 // @todo: will be customisable to be used for logs other than ELB's
 function parseLine (line: string | undefined): object | boolean {
-  if (!line || line == '') {
-    return false;
+  if (!line || line === '') {
+    return false
   }
 
-  const ATTRIBUTES = line.match(/[^\s"']+|"([^"]*)"/gi);
-  let parsedLine: any = {};
+  const ATTRIBUTES = line.match(/[^\s"']+|"([^"]*)"/gi)
+  let parsedLine: any = {}
 
   if (!ATTRIBUTES) {
-    return false;
+    return false
   }
 
   if (isNaN((new Date(ATTRIBUTES[0])).getTime())) {
@@ -290,21 +304,21 @@ function parseLine (line: string | undefined): object | boolean {
     'ssl_protocol': ATTRIBUTES[14],
     'target_group_arn': ATTRIBUTES[15],
     'trace_id': ATTRIBUTES[16]
-  };
+  }
 
-  return parsedLine;
+  return parsedLine
 }
 
 function filterByDate (line: { timestamp: number }, start?: Date, end?: Date) {
-  const timestamp = (new Date(line.timestamp)).getTime();
+  const timestamp = (new Date(line.timestamp)).getTime()
 
   if (start && start.getTime() > timestamp) {
-    return true;
+    return true
   }
 
   if (end && end.getTime() < timestamp) {
-    return true;
+    return true
   }
 
-  return false;
+  return false
 }

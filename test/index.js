@@ -5,10 +5,10 @@ var async = require('async')
 var analyzer = require('../').default
 
 function cleanStdout (stdout) {
-  return stdout.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+  return stdout.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '') // eslint-disable-line no-control-regex
 }
 
-describe('elb-log-analyzer', function() {
+describe('elb-log-analyzer', function () {
   describe('cli mode', function () {
     it('should analyze directory', function (done) {
       exec('node dist/cli.js logs', function (err, stdout) {
@@ -69,7 +69,7 @@ describe('elb-log-analyzer', function() {
     it('custom column client and backend IPs w/o port', function (done) {
       async.parallel([
         async.apply(exec, 'node dist/cli.js logs/ --col2=client'),
-        async.apply(exec, 'node dist/cli.js logs/ --col2=backend'),
+        async.apply(exec, 'node dist/cli.js logs/ --col2=backend')
       ], function (err, results) {
         assert.isNull(err)
 
@@ -188,7 +188,7 @@ describe('elb-log-analyzer', function() {
         done()
       })
     })
-  });
+  })
 
   describe('library mode', function () {
     it('should analyze directory', function (done) {
@@ -207,13 +207,13 @@ describe('elb-log-analyzer', function() {
       analyzer({
         files: ['./logs']
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('should analyze a file', function (done) {
@@ -232,13 +232,13 @@ describe('elb-log-analyzer', function() {
       analyzer({
         files: ['./logs/AWSLogs.log']
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('should analyze multiple files', function (done) {
@@ -257,13 +257,13 @@ describe('elb-log-analyzer', function() {
       analyzer({
         files: ['logs/AWSLogs.log', 'logs/inner-logs/AWSLogs2.log']
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('ascending order', function (done) {
@@ -277,20 +277,20 @@ describe('elb-log-analyzer', function() {
         [1, 'h2://example.com:443/favicons/favicon-96x96.png'],
         [1, 'h2://example.com:443/favicons/favicon-160x160.png'],
         [1, 'h2://example.com:443/favicons/favicon-192x192.png'],
-        [1, 'ws://example.com:443/fonts/font-awesome-4.0.3/fontawesome-webfont.woff?v=4.0.3'],
-      ];
+        [1, 'ws://example.com:443/fonts/font-awesome-4.0.3/fontawesome-webfont.woff?v=4.0.3']
+      ]
 
       analyzer({
         files: ['logs'],
-        ascending: true,
+        ascending: true
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('custom sortBy', function (done) {
@@ -304,22 +304,21 @@ describe('elb-log-analyzer', function() {
         [1, 'ws://example.com:443/favicons/favicon-96x96.png'],
         [1, 'ws://example.com:443/favicons/favicon-32x32.png'],
         [1, 'ws://example.com:443/favicons/apple-touch-icon-180x180.png'],
-        [1, 'ws://example.com:443/example-ozel/ilginc-haberleri/3'],
-      ];
+        [1, 'ws://example.com:443/example-ozel/ilginc-haberleri/3']
+      ]
 
       analyzer({
         files: ['logs'],
-        sortBy: 1,
+        sortBy: 1
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
-
 
     it('custom sortBy ascending', function (done) {
       var result = [
@@ -332,21 +331,21 @@ describe('elb-log-analyzer', function() {
         [1, 'h2://example.com:443/fonts/font-awesome-4.0.3/fontawesome-webfont.woff?v=4.0.3'],
         [1, 'h2://example.com:443/images/icon/article-comment-example.png'],
         [2, 'h2://example.com:443/images/logo/example-new2x.png'],
-        [3, 'h2://example.com:443/img/user/000000000000000000000000'],
-      ];
+        [3, 'h2://example.com:443/img/user/000000000000000000000000']
+      ]
 
       analyzer({
         files: ['logs'],
         ascending: true,
-        sortBy: 1,
+        sortBy: 1
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('custom column', function (done) {
@@ -363,15 +362,15 @@ describe('elb-log-analyzer', function() {
 
       analyzer({
         files: ['logs'],
-        cols: ['count', 'client:port'],
+        requestedColumns: ['count', 'client:port']
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('custom column client and backend IPs w/o port', function (done) {
@@ -390,22 +389,22 @@ describe('elb-log-analyzer', function() {
       Promise.all([
         analyzer({
           files: ['logs'],
-          cols: ['count', 'client'],
+          requestedColumns: ['count', 'client']
         }),
 
         analyzer({
           files: ['logs'],
-          cols: ['count', 'backend'],
+          requestedColumns: ['count', 'backend']
         })
       ]).then(function (logs) {
         logs[0].forEach(function (log, i) {
-          assert.equal(result1[i][0], log[0]);
-          assert.equal(result1[i][1], log[1]);
+          assert.equal(result1[i][0], log[0])
+          assert.equal(result1[i][1], log[1])
         })
 
         logs[1].forEach(function (log, i) {
-          assert.equal(result2[i][0], log[0]);
-          assert.equal(result2[i][1], log[1]);
+          assert.equal(result2[i][0], log[0])
+          assert.equal(result2[i][1], log[1])
         })
         done()
       })
@@ -425,15 +424,15 @@ describe('elb-log-analyzer', function() {
 
       analyzer({
         files: ['logs'],
-        cols: ['total_time', 'client:port'],
+        requestedColumns: ['total_time', 'client:port']
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('multiple custom columns with sortBy', function (done) {
@@ -450,16 +449,16 @@ describe('elb-log-analyzer', function() {
 
       analyzer({
         files: ['logs'],
-        cols: ['count', 'client:port', 'elb_status_code'],
-        sortBy: 1,
+        requestedColumns: ['count', 'client:port', 'elb_status_code'],
+        sortBy: 1
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('prefixing', function (done) {
@@ -476,16 +475,16 @@ describe('elb-log-analyzer', function() {
 
       analyzer({
         files: ['logs'],
-        cols: ['count', 'client:port', 'elb_status_code'],
-        prefixes: [null, '95'],
+        requestedColumns: ['count', 'client:port', 'elb_status_code'],
+        prefixes: [null, '95']
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('prefixing count field', function (done) {
@@ -499,21 +498,21 @@ describe('elb-log-analyzer', function() {
         [12, '85.102.129.207:1713', '200'],
         [12, '85.102.129.207:1714', '200'],
         [12, '216.137.60.6:61784', '200'],
-        [12, '54.240.156.59:62545', '200'],
-      ];
+        [12, '54.240.156.59:62545', '200']
+      ]
 
       analyzer({
         files: ['logs'],
-        cols: ['count', 'client:port', 'elb_status_code'],
-        prefixes: ['1'],
+        requestedColumns: ['count', 'client:port', 'elb_status_code'],
+        prefixes: ['1']
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('prefixing count field with sortBy', function (done) {
@@ -527,23 +526,23 @@ describe('elb-log-analyzer', function() {
         [12, '54.240.156.59:62545', '200'],
         [15, '77.92.102.34:4652', '200'],
         [12, '85.102.129.207:1713', '200'],
-        [12, '85.102.129.207:1714', '200'],
-      ];
+        [12, '85.102.129.207:1714', '200']
+      ]
 
       analyzer({
         files: ['logs'],
-        cols: ['count', 'client:port', 'elb_status_code'],
+        requestedColumns: ['count', 'client:port', 'elb_status_code'],
         prefixes: ['1'],
         sortBy: 1,
-        ascending: true,
+        ascending: true
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('custom limits for the list', function (done) {
@@ -571,19 +570,19 @@ describe('elb-log-analyzer', function() {
         [ 21, 'http://example.com:80/example-ozel/test-haberleri' ],
         [ 18, 'http://example.com:80/mobile/ios/sidemenu.json' ],
         [ 18, 'http://ios.example.com:80/mobile/ios/register-push' ],
-        [ 16, 'https://example.com:443/?mode=json&after=&iteration=1' ] ];
+        [ 16, 'https://example.com:443/?mode=json&after=&iteration=1' ] ]
 
       analyzer({
         files: ['logs'],
-        limit: 25,
+        limit: 25
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('custom limits with sortBy', function (done) {
@@ -607,21 +606,21 @@ describe('elb-log-analyzer', function() {
         [7, 'https://example.com:443/stylesheets/external/font-awesome.css'],
         [2, 'https://example.com:443/profil/streetkedisi'],
         [2, 'https://example.com:443/profil/burak-gumus'],
-        [2, 'https://example.com:443/profil/54f1f544105208421b6a4fe5'],
-      ];
+        [2, 'https://example.com:443/profil/54f1f544105208421b6a4fe5']
+      ]
 
       analyzer({
         files: ['logs'],
         limit: 20,
-        sortBy: 1,
+        sortBy: 1
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('custom limit with custom columns and prefixing', function (done) {
@@ -634,15 +633,15 @@ describe('elb-log-analyzer', function() {
       analyzer({
         files: ['logs'],
         limit: 5,
-        cols: ['count', 'client:port', 'elb_status_code'],
+        requestedColumns: ['count', 'client:port', 'elb_status_code']
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('request more records than there are', function (done) {
@@ -689,16 +688,16 @@ describe('elb-log-analyzer', function() {
       analyzer({
         files: ['logs'],
         limit: 5000,
-        cols: ['count', 'client:port', 'elb_status_code'],
+        requestedColumns: ['count', 'client:port', 'elb_status_code'],
         prefixes: [null, '95']
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('filtering by date', function (done) {
@@ -719,15 +718,15 @@ describe('elb-log-analyzer', function() {
       analyzer({
         files: ['logs'],
         start: new Date('2015-11-07T18:45:34.501734Z'),
-        end: new Date('2015-11-07T18:45:34.768481Z'),
+        end: new Date('2015-11-07T18:45:34.768481Z')
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('filtering by date 2', function (done) {
@@ -746,15 +745,15 @@ describe('elb-log-analyzer', function() {
 
       analyzer({
         files: ['logs'],
-        end: new Date('2015-11-07T18:45:35.368553Z'),
+        end: new Date('2015-11-07T18:45:35.368553Z')
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('should parse application ELB logs as well', function (done) {
@@ -763,20 +762,20 @@ describe('elb-log-analyzer', function() {
         [161, 'h2'],
         [148, 'https'],
         [71, 'ws'],
-        [69, 'wss'],
-      ];
+        [69, 'wss']
+      ]
 
       analyzer({
         files: ['logs/AppELBLog.log'],
-        cols: ['count', 'type'],
+        requestedColumns: ['count', 'type']
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
 
     it('should parse application ELB logs in directory as well', function (done) {
@@ -785,20 +784,20 @@ describe('elb-log-analyzer', function() {
         [161, 'h2'],
         [148, 'https'],
         [71, 'ws'],
-        [69, 'wss'],
-      ];
+        [69, 'wss']
+      ]
 
       analyzer({
         files: ['logs'],
-        cols: ['count', 'type'],
+        requestedColumns: ['count', 'type']
       })
-      .then(function (logs) {
-        logs.forEach(function (log, i) {
-          assert.equal(result[i][0], log[0]);
-          assert.equal(result[i][1], log[1]);
+        .then(function (logs) {
+          logs.forEach(function (log, i) {
+            assert.equal(result[i][0], log[0])
+            assert.equal(result[i][1], log[1])
+          })
+          done()
         })
-        done()
-      })
     })
   })
-});
+})
