@@ -24,3 +24,7 @@ node_modules
 .lock-wscript
 
 .DS_Store
+
+# IDE files
+.idea/
+.vscode/

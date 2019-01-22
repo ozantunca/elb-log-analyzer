@@ -58,6 +58,8 @@ options.prefixes = [];
 options.sortBy = options.sortBy - 1; // lib.js accepts sortBy starting with 0 while cli accepts starting with 1
 options.limit = options.limit || 10;
 options.ascending = options.a;
+options.clientCidr = options.clientCidr || false;
+options.backendCidr = options.backendCidr || false;
 
 // Parse prefixes and column choices
 _.each(options, function (arg, key) {

@@ -5,6 +5,7 @@ import fs       from 'fs';
 import readline from 'readline';
 import _        from 'underscore';
 import glob     from 'glob';
+import ipRangeCheck from 'ip-range-check';
 import async    from 'async';
 import Promise  from 'bluebird';
 
@@ -15,7 +16,7 @@ const FIELDS = ['type', 'timestamp', 'elb', 'client:port', 'client', 'backend:po
 
 module.exports = function ({
   logs = [], files = [], cols = ['count', 'requested_resource'], prefixes = [],
-  sortBy = 0, limit = 10, ascending = false, start, end, onProgress = () => {}, onStart = () => {}
+  sortBy = 0, limit = 10, ascending = false, start, end, onProgress, clientCidr, backendCidr = () => {}, onStart = () => {}
 }) {
   return new Promise((pass, fail) => {
     // collect file names
@@ -65,6 +66,8 @@ module.exports = function ({
         prefixes,
         start,
         end,
+        clientCidr,
+        backendCidr
       });
 
       const filterFunc = generateFilter(prefixes.slice(), cols);
@@ -132,7 +135,7 @@ function generateFilter (prefixes, cols) {
     );
 }
 
-function generateProcessor ({ cols, sortBy, ascending, limit, prefixes, start, end }) {
+function generateProcessor ({ cols, sortBy, ascending, limit, prefixes, start, end, clientCidr, backendCidr }) {
   const COUNT_INDEX = cols.indexOf('count');
 
   if (COUNT_INDEX > -1) {
@@ -147,6 +150,14 @@ function generateProcessor ({ cols, sortBy, ascending, limit, prefixes, start, e
 
         if (!line)
           return;
+
+        if (clientCidr && !ipRangeCheck(line["client"], clientCidr)) {
+          return;
+        }
+
+        if (backendCidr && !ipRangeCheck(line["backend"], backendCidr)) {
+          return;
+        }
 
         // filter lines by date if requested
         if ((start || end) && filterByDate(line, start, end))
@@ -207,6 +218,14 @@ function generateProcessor ({ cols, sortBy, ascending, limit, prefixes, start, e
         if (filterFunc && !filterFunc(line))
           return;
 
+        if (clientCidr && !ipRangeCheck(line["client"], clientCidr)) {
+          return;
+        }
+
+        if (backendCidr && !ipRangeCheck(line["backend"], backendCidr)) {
+          return;
+        }
+
         const FIRSTLINE = _.first(outputLines);
 
         // Add lines until the limit is reached
@@ -264,7 +283,7 @@ function splice (lines, newLine, sortBy) {
 // @todo: will be customisable to be used for logs
 // other than ELB's
 function parseLine (line) {
-  if (!line || line == '') {
+  if (!line || line === '') {
     return false;
   }
 

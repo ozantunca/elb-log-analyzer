@@ -20,6 +20,10 @@ var _glob = require('glob');
 
 var _glob2 = _interopRequireDefault(_glob);
 
+var _ipRangeCheck = require('ip-range-check');
+
+var _ipRangeCheck2 = _interopRequireDefault(_ipRangeCheck);
+
 var _async = require('async');
 
 var _async2 = _interopRequireDefault(_async);
@@ -49,8 +53,10 @@ module.exports = function (_ref) {
       ascending = _ref$ascending === undefined ? false : _ref$ascending,
       start = _ref.start,
       end = _ref.end,
-      _ref$onProgress = _ref.onProgress,
-      onProgress = _ref$onProgress === undefined ? function () {} : _ref$onProgress,
+      onProgress = _ref.onProgress,
+      clientCidr = _ref.clientCidr,
+      _ref$backendCidr = _ref.backendCidr,
+      backendCidr = _ref$backendCidr === undefined ? function () {} : _ref$backendCidr,
       _ref$onStart = _ref.onStart,
       onStart = _ref$onStart === undefined ? function () {} : _ref$onStart;
 
@@ -104,7 +110,9 @@ module.exports = function (_ref) {
         ascending: ascending,
         prefixes: prefixes,
         start: start,
-        end: end
+        end: end,
+        clientCidr: clientCidr,
+        backendCidr: backendCidr
       });
 
       var filterFunc = generateFilter(prefixes.slice(), cols);
@@ -178,7 +186,9 @@ function generateProcessor(_ref2) {
       limit = _ref2.limit,
       prefixes = _ref2.prefixes,
       start = _ref2.start,
-      end = _ref2.end;
+      end = _ref2.end,
+      clientCidr = _ref2.clientCidr,
+      backendCidr = _ref2.backendCidr;
 
   var COUNT_INDEX = cols.indexOf('count');
 
@@ -193,6 +203,14 @@ function generateProcessor(_ref2) {
         line = parseLine(line);
 
         if (!line) return;
+
+        if (clientCidr && !(0, _ipRangeCheck2.default)(line["client"], clientCidr)) {
+          return;
+        }
+
+        if (backendCidr && !(0, _ipRangeCheck2.default)(line["backend"], backendCidr)) {
+          return;
+        }
 
         // filter lines by date if requested
         if ((start || end) && filterByDate(line, start, end)) return;
@@ -253,6 +271,14 @@ function generateProcessor(_ref2) {
 
         if (filterFunc && !filterFunc(line)) return;
 
+        if (clientCidr && !(0, _ipRangeCheck2.default)(line["client"], clientCidr)) {
+          return;
+        }
+
+        if (backendCidr && !(0, _ipRangeCheck2.default)(line["backend"], backendCidr)) {
+          return;
+        }
+
         var FIRSTLINE = _underscore2.default.first(outputLines);
 
         // Add lines until the limit is reached
@@ -307,7 +333,7 @@ function splice(lines, newLine, sortBy) {
 // @todo: will be customisable to be used for logs
 // other than ELB's
 function parseLine(line) {
-  if (!line || line == '') {
+  if (!line || line === '') {
     return false;
   }
 

@@ -173,6 +173,14 @@ describe('elb-log-analyzer', function() {
       })
     })
 
+    it('filter by client and backend CIDR', function (done) {
+      exec('node dist/cli.js logs/ --clientCidr=95.0.0.0/8 --backendCidr=10.0.2.143 --col1=count --col2=client --col3=backend', function (err, stdout) {
+        assert.isNull(err)
+        assert.equal(cleanStdout(stdout), '1 - 36 - 95.7.142.5 - 10.0.2.143\n2 - 21 - 95.14.129.124 - 10.0.2.143\n3 - 9 - 95.15.16.130 - 10.0.2.143\n4 - 6 - 95.10.99.215 - 10.0.2.143\n5 - 3 - 95.13.202.204 - 10.0.2.143\n6 - 3 - 95.13.122.139 - 10.0.2.143\n7 - 3 - 95.5.5.17 - 10.0.2.143\n8 - 3 - 95.70.131.112 - 10.0.2.143\n9 - 3 - 95.65.184.99 - 10.0.2.143\n10 - 3 - 95.0.141.142 - 10.0.2.143\n')
+        done()
+      })
+    })
+
     it('should parse application ELB logs as well', function (done) {
       exec('node dist/cli.js logs/AppELBLog.log --col2=type', function (err, stdout) {
         assert.isNull(err)

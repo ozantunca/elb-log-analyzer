@@ -172,6 +172,19 @@ elb-log-analyzer logs/ --start=2016/05/30
 elb-log-analyzer logs/ --start="2015-11-07 18:45:34"
 elb-log-analyzer logs/ --end=2015-11-07T18:45:34.768481Z
 ```
+##### Filter by client and backend CIDR or IP Address
+You can specify CIDR ranges or IP addresses to filter client and backend network addresses.
+
+```sh
+elb-log-analyzer logs --clientCidr=192.0.2.0/24 --backendCidr=198.51.100.0/24
+```
+
+will return only those records that originate within the 192.0.2.0/24 subnet and are directed to the 198.51.100.0/24 backend subnet.  Non-CIDR IP addresses may also be used:
+
+```sh
+elb-log-analyzer logs --clientCidr=192.0.2.10 --backendCidr=198.51.100.55
+```
+will return only records originating from IP address 192.0.2.10 and terminating at 198.51.100.55.
 
 #### Limiting
 By default analyzer brings first 10 rows but this can be changed using `--limit` option. For instance to be able to get 25 rows `--limit=25` should be specifiied.
