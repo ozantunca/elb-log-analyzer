@@ -1,9 +1,9 @@
 import fs from 'fs'
 import readline from 'readline'
-import _ from 'underscore'
-import Promise from 'bluebird'
+import _ from 'lodash'
+import { promisify } from 'util'
 
-const glob: Function = Promise.promisify(require('glob'))
+const glob: Function = promisify(require('glob'))
 const ALL_FIELDS = [
   'type', 'timestamp', 'elb', 'client:port', 'client', 'backend:port', 'backend', 'request_processing_time',
   'backend_processing_time', 'response_processing_time', 'elb_status_code', 'backend_status_code',
@@ -24,21 +24,22 @@ export default async function ({
   onStart = () => {}
 } : LibraryOptions) {
   // collect file names
-  return Promise.map(files, async (fileName: string) => {
-    let fileList: string[] = await glob(fileName + '/**/*', { nodir: true })
-    if (!fileList || !fileList.length) {
-      fileList = await glob(fileName, { nodir: true })
-
+  return Promise.all(
+    _.map(files, async (fileName: string) => {
+      let fileList: string[] = await glob(fileName + '/**/*', { nodir: true })
       if (!fileList || !fileList.length) {
-        throw new Error(`No file with name '${fileName}' found.`)
+        fileList = await glob(fileName, { nodir: true })
+
+        if (!fileList || !fileList.length) {
+          throw new Error(`No file with name '${fileName}' found.`)
+        }
       }
-    }
-    return fileList
-  })
+      return fileList
+    })
+  )
     .then((results) => {
       const fileNames = _.flatten(results)
 
-      // Processing starts
       onStart(fileNames)
 
       // Fail when user requests a column that is not support by the analyzer
@@ -80,23 +81,25 @@ export default async function ({
 // Reads files line by line and passes them
 // to the processor function
 function parseFiles (fileNames: string[], processFunc: CallbackFunction, onProgress: CallbackFunction) {
-  return Promise.map(fileNames, (fileName: string) =>
-    new Promise((resolve: CallbackFunction) => {
-      const RL = readline.createInterface({
-        terminal: false,
-        input: fs.createReadStream(fileName)
-      })
+  return Promise.all(
+    _.map(fileNames, (fileName: string) =>
+      new Promise((resolve: CallbackFunction) => {
+        const RL = readline.createInterface({
+          terminal: false,
+          input: fs.createReadStream(fileName)
+        })
 
-      // Read file contents
-      RL.on('line', (line: string) => {
-        processFunc(line)
-      })
+        // Read file contents
+        RL.on('line', (line: string) => {
+          processFunc(line)
+        })
 
-      RL.on('close', () => {
-        onProgress()
-        resolve()
+        RL.on('close', () => {
+          onProgress()
+          resolve()
+        })
       })
-    })
+    )
   )
 }
 
@@ -120,11 +123,26 @@ function generateFilter (prefixes: string[], cols: string[]) {
     )
 }
 
-function generateProcessor ({ requestedColumns, sortBy, ascending, limit, prefixes, start, end } : ParserOptions) {
+interface ProcessorType {
+  process (filterFunc: any, line: string): void
+  getResults (): string[][]
+}
+
+function generateProcessor ({
+  requestedColumns,
+  sortBy,
+  ascending,
+  limit,
+  prefixes,
+  start,
+  end
+}: ParserOptions): ProcessorType {
   const COUNT_INDEX = requestedColumns.indexOf('count')
 
   if (COUNT_INDEX > -1) {
-    let counts: any = {}
+    let counts: {
+      [key: string]: number
+    } = {}
     let tempCols = requestedColumns.slice(0)
 
     tempCols.splice(COUNT_INDEX, 1)
@@ -163,15 +181,15 @@ function generateProcessor ({ requestedColumns, sortBy, ascending, limit, prefix
       getResults () {
         let q = _.chain(counts)
           .pairs()
-          .map(function (l) {
-            const COUNT = l[1]
-            l = JSON.parse(l[0])
-            l.splice(COUNT_INDEX, 0, COUNT)
-            return l
+          .map(function (line: string[]) {
+            const COUNT = line[1]
+            line = JSON.parse(line[0])
+            line.splice(COUNT_INDEX, 0, COUNT)
+            return line
           })
 
         if (prefixes && prefixes[COUNT_INDEX]) {
-          q = q.filter(line => line[COUNT_INDEX].toString().startsWith(prefixes[COUNT_INDEX]))
+          q = q.filter((line: string) => line[COUNT_INDEX].toString().startsWith(prefixes[COUNT_INDEX]))
         }
 
         return q.sortBy(sortBy.toString()).value()
@@ -238,35 +256,37 @@ function generateProcessor ({ requestedColumns, sortBy, ascending, limit, prefix
 
 // sort while inserting
 function splice (lines: string[][], newLine: string[], sortBy: number) {
-  let l = lines.length
+  let len = lines.length
   let compare
 
-  while (l--) {
-    if (typeof lines[l][sortBy] === 'number' && typeof newLine[sortBy] === 'number') {
-      compare = lines[l][sortBy] < newLine[sortBy] ? -1 : 1
+  while (len--) {
+    if (typeof lines[len][sortBy] === 'number' && typeof newLine[sortBy] === 'number') {
+      compare = lines[len][sortBy] < newLine[sortBy] ? -1 : 1
     } else {
-      compare = String(lines[l][sortBy]).localeCompare(newLine[sortBy])
+      compare = String(lines[len][sortBy]).localeCompare(newLine[sortBy])
     }
 
     if (compare < 0) { break }
   }
 
-  lines.splice(l + 1, 0, newLine)
+  lines.splice(len + 1, 0, newLine)
   return lines
 }
 
 // line parser function
 // @todo: will be customisable to be used for logs other than ELB's
-function parseLine (line: string | undefined): object | boolean {
+function parseLine (line: string | undefined): object | undefined {
   if (!line || line === '') {
-    return false
+    return
   }
 
   const ATTRIBUTES = line.match(/[^\s"']+|"([^"]*)"/gi)
-  let parsedLine: any = {}
+  let parsedLine: {
+    [key: string]: any
+  } = {}
 
   if (!ATTRIBUTES) {
-    return false
+    return
   }
 
   if (isNaN((new Date(ATTRIBUTES[0])).getTime())) {

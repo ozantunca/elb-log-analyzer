@@ -1,6 +1,6 @@
 type CallbackFunction = (...args: any[]) => void
 interface ParserOptions {
-  requestedColumns: string[],
+  requestedColumns?: string[],
   sortBy: number,
   ascending: boolean,
   limit: number,

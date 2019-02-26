@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 import lib from './lib'
-import _ from 'underscore'
+import _ from 'lodash'
 import ProgressBar from 'progress'
 import fs from 'fs'
 import * as path from 'path'
@@ -8,7 +8,20 @@ import * as path from 'path'
 const USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
 
 const colors: any = require('colors/safe')
-let options = require('optimist').argv
+let options: {
+  v?: boolean
+  version?: boolean
+  start?: string | Date
+  end?: string | Date
+  s?: number
+  sortBy: number
+  cols: string[]
+  limit?: number
+  ascending?: boolean
+  a?: boolean
+  prefixes: string[]
+  _: any
+} = require('optimist').argv
 let files = options._
 let bar: ProgressBar
 
@@ -66,7 +79,7 @@ _.each(options, function (arg: any, key: string) {
   if (match && !isNaN(Number(match[2]))) {
     let index: number = Number(match[2]) - 1
     options.prefixes[index] = arg
-    return arg
+    return
   }
 
   match = key.match(/^c(ol){0,1}([0-9]+)$/)
