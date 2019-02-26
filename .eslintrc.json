@@ -1,0 +1,17 @@
+{
+  "env": {
+    "es6": true
+  },
+  "extends": "standard",
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2018,
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-console": "off",
+    "import/no-extraneous-dependencies": "off",
+    "no-underscore-dangle": "off"
+  },
+  "root": true
+}

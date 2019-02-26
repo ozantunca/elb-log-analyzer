@@ -1,7 +1,5 @@
 #! /usr/bin/env node
-'use strict';
-
-require("babel-polyfill");
+"use strict";
 
 var _lib = _interopRequireDefault(require("./lib"));
 
@@ -13,17 +11,14 @@ var _fs = _interopRequireDefault(require("fs"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+const USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan'];
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+const colors = require('colors/safe');
 
-var USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan'];
+let options = require('optimist').argv;
 
-var colors = require('colors/safe');
-
-var options = require('optimist').argv,
-    files = options._,
-    bar;
+let files = options._;
+let bar;
 
 if (options.version || options.v) {
   console.log(JSON.parse(_fs.default.readFileSync(__dirname + '/../package.json').toString()).version);
@@ -73,29 +68,30 @@ options.limit = options.limit || 10;
 options.ascending = options.a; // Parse prefixes and column choices
 
 _underscore.default.each(options, function (arg, key) {
-  var match = key.match(/^p(refix){0,1}([0-9]+)$/);
+  let match = key.match(/^p(refix){0,1}([0-9]+)$/);
 
   if (match && !isNaN(Number(match[2]))) {
-    var index = Number(match[2]) - 1;
+    let index = Number(match[2]) - 1;
     return options.prefixes[index] = arg;
   }
 
   match = key.match(/^c(ol){0,1}([0-9]+)$/);
 
   if (match && !isNaN(Number(match[2]))) {
-    var _index = Number(match[2]) - 1;
-
-    options.cols[_index] = arg;
+    let index = Number(match[2]) - 1;
+    options.cols[index] = arg;
   }
 });
 
-(0, _lib.default)(_objectSpread({
-  files: files
-}, options, {
-  onProgress: function onProgress() {
+(0, _lib.default)({
+  files,
+  ...options,
+
+  onProgress() {
     bar.tick();
   },
-  onStart: function onStart(filenames) {
+
+  onStart(filenames) {
     bar = new _progress.default(' processing [:bar] :percent :etas', {
       complete: '=',
       incomplete: ' ',
@@ -103,10 +99,11 @@ _underscore.default.each(options, function (arg, key) {
       total: filenames.length
     });
   }
-})).then(function (logs) {
-  _underscore.default.each(logs, function (log, i) {
-    var coloredText = _underscore.default.map(log, function (l, index) {
-      var colorName = USEFUL_COLORS[index % USEFUL_COLORS.length];
+
+}).then(function (logs) {
+  _underscore.default.each(logs, (log, i) => {
+    const coloredText = _underscore.default.map(log, (l, index) => {
+      const colorName = USEFUL_COLORS[index % USEFUL_COLORS.length];
       return colors[colorName](l);
     }).join(colors.white(' - '));
 
@@ -115,5 +112,5 @@ _underscore.default.each(options, function (arg, key) {
 }).catch(handler);
 
 function handler(err) {
-  console.log("".concat(colors.red('An error occured'), ": "), colors.cyan(err.toString()));
+  console.log(`${colors.red('An error occured')}: `, colors.cyan(err.toString()));
 }
