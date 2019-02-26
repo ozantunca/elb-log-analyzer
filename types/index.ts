@@ -1,4 +1,5 @@
 type CallbackFunction = (...args: any[]) => void
+type FilterFunction = (...args: any[]) => Boolean
 interface ParserOptions {
   requestedColumns?: string[],
   sortBy: number,
@@ -9,8 +10,7 @@ interface ParserOptions {
   end?: Date
 }
 interface LibraryOptions extends ParserOptions {
-  cols: string[],
   files: string[],
   onProgress: CallbackFunction,
-  onStart: (filenames: any) => void
+  onStart: CallbackFunction
 }

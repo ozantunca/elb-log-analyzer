@@ -9,19 +9,27 @@ var _progress = _interopRequireDefault(require("progress"));
 
 var _fs = _interopRequireDefault(require("fs"));
 
+var _path = _interopRequireDefault(require("path"));
+
+var _minimist = _interopRequireDefault(require("minimist"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan'];
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
 
-const colors = require('colors/safe');
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-let options = require('optimist').argv;
+var colors = require('colors/safe');
 
-let files = options._;
-let bar;
+var USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan'];
+var options = (0, _minimist.default)(process.argv.slice(2));
+var files = options._;
+var bar;
 
 if (options.version || options.v) {
-  console.log(JSON.parse(_fs.default.readFileSync(__dirname + '/../package.json').toString()).version);
+  var filePath = _path.default.join(__dirname, '/../package.json');
+
+  console.log(JSON.parse(_fs.default.readFileSync(filePath).toString()).version);
   process.exit();
 }
 
@@ -71,8 +79,9 @@ _underscore.default.each(options, function (arg, key) {
   let match = key.match(/^p(refix){0,1}([0-9]+)$/);
 
   if (match && !isNaN(Number(match[2]))) {
-    let index = Number(match[2]) - 1;
-    return options.prefixes[index] = arg;
+    var index = Number(match[2]) - 1;
+    options.prefixes[index] = arg;
+    return arg;
   }
 
   match = key.match(/^c(ol){0,1}([0-9]+)$/);
@@ -83,11 +92,11 @@ _underscore.default.each(options, function (arg, key) {
   }
 });
 
-(0, _lib.default)({
-  files,
-  ...options,
-
-  onProgress() {
+(0, _lib.default)(_objectSpread({
+  files: files,
+  requestedColumns: options.cols
+}, _underscore.default.pick(options, 'prefixes', 'sortBy', 'limit', 'ascending', 'start', 'end'), {
+  onProgress: function onProgress() {
     bar.tick();
   },
 

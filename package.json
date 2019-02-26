@@ -37,7 +37,7 @@
     "lint:fix": "eslint src/* --fix"
   },
   "readmeFilename": "README.md",
-  "homepage": "https://github.com/ozantunca/DispatcherJS",
+  "homepage": "https://github.com/ozantunca/elb-log-analyzer",
   "devDependencies": {
     "@babel/cli": "^7.2.3",
     "@babel/core": "^7.3.4",
