@@ -2,7 +2,7 @@
 var assert = require('chai').assert
 var exec = require('child_process').exec
 var async = require('async')
-var analyzer = require('../').default
+var analyzer = require('../dist/lib').default
 
 function cleanStdout (stdout) {
   return stdout.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '')

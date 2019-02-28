@@ -30,7 +30,7 @@
     "progress": "^2.0.3"
   },
   "scripts": {
-    "test": "npm run lint && mocha test/index.js",
+    "test": "npm run lint && mocha test/index.test.js",
     "build": "tsc --noEmit && babel src/lib.ts src/cli.ts --out-dir dist --extensions \".ts,.tsx\"",
     "dev": "tsc --noEmit && babel src/lib.ts src/cli.ts --out-dir dist --extensions \".ts,.tsx\" --watch",
     "lint": "eslint src/*",
@@ -58,6 +58,7 @@
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
     "mocha": "^6.0.2",
+    "ts-node": "^8.0.2",
     "typescript": "^3.3.3333"
   }
 }

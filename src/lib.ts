@@ -2,6 +2,7 @@ import fs from 'fs'
 import readline from 'readline'
 import _ from 'lodash'
 import { promisify } from 'util'
+import { ParserOptions, LibraryOptions, ParsedLine } from '../types/library'
 
 const glob: Function = promisify(require('glob'))
 const ALL_FIELDS = [
@@ -43,7 +44,7 @@ export default async function ({
       onStart(fileNames)
 
       // Fail when user requests a column that is not support by the analyzer
-      if (cols.some(c => !~ALL_FIELDS.indexOf(c))) {
+      if (cols.some(column => !~ALL_FIELDS.indexOf(column))) {
         throw new Error('One or more of the requested columns does not exist.')
       }
 
@@ -80,10 +81,10 @@ export default async function ({
 
 // Reads files line by line and passes them
 // to the processor function
-function parseFiles (fileNames: string[], processFunc: CallbackFunction, onProgress: CallbackFunction) {
+function parseFiles (fileNames: string[], processFunc: Function, onProgress: Function) {
   return Promise.all(
     _.map(fileNames, (fileName: string) =>
-      new Promise((resolve: CallbackFunction) => {
+      new Promise((resolve: Function) => {
         const RL = readline.createInterface({
           terminal: false,
           input: fs.createReadStream(fileName)
@@ -104,27 +105,29 @@ function parseFiles (fileNames: string[], processFunc: CallbackFunction, onProgr
 }
 
 // Generates a filter function depending on prefixes
-function generateFilter (prefixes: string[], cols: string[]) {
+function generateFilter (prefixes: string[], cols: string[]): Function | null {
   const COUNT_INDEX = cols.indexOf('count')
 
   if (COUNT_INDEX > -1) {
     prefixes.splice(COUNT_INDEX, 1)
   }
 
-  if (prefixes.length === 0) return null
+  if (prefixes.length === 0) {
+    return null
+  }
 
-  return (line: Array<any>) =>
-    _.every(prefixes, (p, i) =>
-      (!p && p !== '0') || // no prefix for this index
+  return (line: string[]) =>
+    _.every(prefixes, (prefix, i) =>
+      (!prefix && prefix !== '0') || // no prefix for this index
       (
         line[i] && // line has value in that index
-        line[i].toString().startsWith(p) // line startsWith given prefix
+        line[i].toString().startsWith(prefix) // line startsWith given prefix
       )
     )
 }
 
 interface ProcessorType {
-  process (filterFunc: any, line: string): void
+  process (filterFunc: Function | null, line: string): void
   getResults (): string[][]
 }
 
@@ -148,43 +151,46 @@ function generateProcessor ({
     tempCols.splice(COUNT_INDEX, 1)
 
     return {
-      process (filterFunc: any, line: string) {
-        let lineObj: any = parseLine(line)
+      process (filterFunc, line) {
+        if (_.isEmpty(line)) {
+          return
+        }
 
-        if (!lineObj) {
+        let parsedLineAsObject: ParsedLine | undefined = parseLine(line)
+
+        if (!parsedLineAsObject) {
           return
         }
 
         // filter lines by date if requested
-        if ((start || end) && filterByDate(lineObj, start, end)) {
+        if ((start || end) && filterByDate(parsedLineAsObject, start, end)) {
           return
         }
 
-        lineObj = _.map(tempCols, c => lineObj[c])
+        const parsedLineWithRequestedColumns = _.values(_.pick(parsedLineAsObject, tempCols))
 
         // Drop the line if any of the columns requested does not exist in this line
-        if (lineObj.some((c: string) => !c && c !== '0')) {
+        if (_.some(parsedLineWithRequestedColumns, (column: any) => !column && column !== '0')) {
           return
         }
 
         // Count column is not in 'line' at this moment
         // so we are defining a new variable that includes it
-        if (filterFunc && !filterFunc(lineObj)) {
+        if (filterFunc && !filterFunc(parsedLineWithRequestedColumns)) {
           return
         }
 
         // stringifying columns serves as a multi-column group_by
-        const LINESTRING = JSON.stringify(lineObj)
+        const LINESTRING = JSON.stringify(parsedLineWithRequestedColumns)
         counts[LINESTRING] = counts[LINESTRING] ? counts[LINESTRING] + 1 : 1
       },
 
       getResults () {
         let q = _.chain(counts)
-          .pairs()
-          .map(function (line: string[]) {
-            const COUNT = line[1]
-            line = JSON.parse(line[0])
-            line.splice(COUNT_INDEX, 0, COUNT)
+          .toPairs()
+          .map(function ([key, countNumber]: [string, number]) {
+            const line = JSON.parse(key)
+            line.splice(COUNT_INDEX, 0, countNumber)
             return line
           })
 
@@ -196,11 +202,11 @@ function generateProcessor ({
       }
     }
   } else {
-    const TEMP_COLS = requestedColumns.slice(0)
+    const temporaryColumns = requestedColumns.slice(0)
     let outputLines: string[][] = []
 
     return {
-      process (filterFunc: Function, line: string) {
+      process (filterFunc, line) {
         let lineObj: any = parseLine(line)
 
         // filter lines by date if requested
@@ -208,10 +214,10 @@ function generateProcessor ({
           return
         }
 
-        lineObj = _.map(TEMP_COLS, c => lineObj[c])
+        lineObj = _.map(temporaryColumns, (column: string) => lineObj[column])
 
         // Drop the line if any of the columns requested does not exist in this line
-        if (lineObj.some((c: string) => !c && c !== '0')) {
+        if (lineObj.some((column: string) => !column && column !== '0')) {
           return
         }
 
@@ -266,7 +272,9 @@ function splice (lines: string[][], newLine: string[], sortBy: number) {
       compare = String(lines[len][sortBy]).localeCompare(newLine[sortBy])
     }
 
-    if (compare < 0) { break }
+    if (compare < 0) {
+      break
+    }
   }
 
   lines.splice(len + 1, 0, newLine)
@@ -275,53 +283,47 @@ function splice (lines: string[][], newLine: string[], sortBy: number) {
 
 // line parser function
 // @todo: will be customisable to be used for logs other than ELB's
-function parseLine (line: string | undefined): object | undefined {
-  if (!line || line === '') {
-    return
-  }
-
+function parseLine (line: string): ParsedLine | undefined {
   const ATTRIBUTES = line.match(/[^\s"']+|"([^"]*)"/gi)
-  let parsedLine: {
-    [key: string]: any
-  } = {}
-
   if (!ATTRIBUTES) {
     return
   }
 
+  let type: string | undefined
+
   if (isNaN((new Date(ATTRIBUTES[0])).getTime())) {
-    parsedLine.type = ATTRIBUTES.shift()
+    type = ATTRIBUTES.shift()
   }
 
-  parsedLine = {
-    ...parsedLine,
-    'timestamp': ATTRIBUTES[0],
-    'elb': ATTRIBUTES[1],
-    'client': String(ATTRIBUTES[2]).split(':')[0],
+  let parsedLine: ParsedLine = {
+    timestamp: ATTRIBUTES[0],
+    elb: ATTRIBUTES[1],
+    client: String(ATTRIBUTES[2]).split(':')[0],
     'client:port': ATTRIBUTES[2],
-    'backend': String(ATTRIBUTES[3]).split(':')[0],
+    backend: String(ATTRIBUTES[3]).split(':')[0],
     'backend:port': ATTRIBUTES[3],
-    'request_processing_time': ATTRIBUTES[4],
-    'backend_processing_time': ATTRIBUTES[5],
-    'response_processing_time': ATTRIBUTES[6],
-    'elb_status_code': ATTRIBUTES[7],
-    'backend_status_code': ATTRIBUTES[8],
-    'received_bytes': ATTRIBUTES[9],
-    'sent_bytes': ATTRIBUTES[10],
-    'request': ATTRIBUTES[11],
-    'requested_resource': String(ATTRIBUTES[11]).split(' ')[1],
-    'user_agent': ATTRIBUTES[12],
-    'total_time': parseFloat(ATTRIBUTES[4]) + parseFloat(ATTRIBUTES[5]) + parseFloat(ATTRIBUTES[6]),
-    'ssl_cipher': ATTRIBUTES[13],
-    'ssl_protocol': ATTRIBUTES[14],
-    'target_group_arn': ATTRIBUTES[15],
-    'trace_id': ATTRIBUTES[16]
+    request_processing_time: Number(ATTRIBUTES[4]),
+    backend_processing_time: Number(ATTRIBUTES[5]),
+    response_processing_time: Number(ATTRIBUTES[6]),
+    elb_status_code: ATTRIBUTES[7],
+    backend_status_code: ATTRIBUTES[8],
+    received_bytes: ATTRIBUTES[9],
+    sent_bytes: ATTRIBUTES[10],
+    request: ATTRIBUTES[11],
+    requested_resource: String(ATTRIBUTES[11]).split(' ')[1],
+    user_agent: ATTRIBUTES[12],
+    total_time: Number(ATTRIBUTES[4]) + Number(ATTRIBUTES[5]) + Number(ATTRIBUTES[6]),
+    ssl_cipher: ATTRIBUTES[13],
+    ssl_protocol: ATTRIBUTES[14],
+    target_group_arn: ATTRIBUTES[15],
+    trace_id: ATTRIBUTES[16],
+    type
   }
 
   return parsedLine
 }
 
-function filterByDate (line: { timestamp: number }, start?: Date, end?: Date) {
+function filterByDate (line: { timestamp: string }, start?: Date, end?: Date) {
   const timestamp = (new Date(line.timestamp)).getTime()
 
   if (start && start.getTime() > timestamp) {

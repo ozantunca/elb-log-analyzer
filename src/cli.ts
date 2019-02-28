@@ -3,25 +3,14 @@ import lib from './lib'
 import _ from 'lodash'
 import ProgressBar from 'progress'
 import fs from 'fs'
-import * as path from 'path'
+import path from 'path'
+import { CLIOptions } from '../types/cli'
+import { LibraryOptions } from '../types/library'
 
 const USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
 
 const colors: any = require('colors/safe')
-let options: {
-  v?: boolean
-  version?: boolean
-  start?: string | Date
-  end?: string | Date
-  s?: number
-  sortBy: number
-  cols: string[]
-  limit?: number
-  ascending?: boolean
-  a?: boolean
-  prefixes: string[]
-  _: any
-} = require('optimist').argv
+let options: CLIOptions = require('optimist').argv
 let files = options._
 let bar: ProgressBar
 
@@ -36,28 +25,6 @@ if (!files.length) {
   process.exit()
 }
 
-if (options.start) {
-  options.start = String(options.start)
-
-  if ((new Date(options.start)).toString() === 'Invalid Date') {
-    handler(new Error('Start date is invalid'))
-    process.exit()
-  } else {
-    options.start = new Date(options.start)
-  }
-}
-
-if (options.end) {
-  options.end = String(options.end)
-
-  if ((new Date(options.end)).toString() === 'Invalid Date') {
-    handler(new Error('End date is invalid'))
-    process.exit()
-  } else {
-    options.end = new Date(options.end)
-  }
-}
-
 options.sortBy = options.sortBy || options.s || 1
 
 if (typeof options.sortBy !== 'number') {
@@ -66,11 +33,36 @@ if (typeof options.sortBy !== 'number') {
 }
 
 // Assign default columns
-options.cols = ['count', 'requested_resource']
-options.prefixes = []
-options.sortBy = options.sortBy - 1 // lib.js accepts sortBy starting with 0 while cli accepts starting with 1
-options.limit = options.limit || 10
-options.ascending = options.a
+const parsedOptions: LibraryOptions = {
+  files,
+  cols: ['count', 'requested_resource'],
+  prefixes: [],
+  sortBy: options.sortBy - 1, // lib.js accepts sortBy starting with 0 while cli accepts starting with 1
+  limit: options.limit || 10,
+  ascending: options.a
+}
+
+if (!_.isEmpty(options.start)) {
+  options.start = String(options.start)
+
+  if ((new Date(options.start)).toString() === 'Invalid Date') {
+    handler(new Error('Start date is invalid'))
+    process.exit()
+  } else {
+    parsedOptions.start = new Date(options.start)
+  }
+}
+
+if (!_.isEmpty(options.end)) {
+  options.end = String(options.end)
+
+  if ((new Date(options.end)).toString() === 'Invalid Date') {
+    handler(new Error('End date is invalid'))
+    process.exit()
+  } else {
+    parsedOptions.end = new Date(options.end)
+  }
+}
 
 // Parse prefixes and column choices
 _.each(options, function (arg: any, key: string) {
@@ -78,7 +70,7 @@ _.each(options, function (arg: any, key: string) {
 
   if (match && !isNaN(Number(match[2]))) {
     let index: number = Number(match[2]) - 1
-    options.prefixes[index] = arg
+    parsedOptions.prefixes[index] = arg
     return
   }
 
@@ -86,13 +78,12 @@ _.each(options, function (arg: any, key: string) {
 
   if (match && !isNaN(Number(match[2]))) {
     let index: number = Number(match[2]) - 1
-    options.cols[index] = arg
+    parsedOptions.cols[index] = arg
   }
 })
 
 lib({
-  files,
-  ...options,
+  ...parsedOptions,
   onProgress () {
     bar.tick()
   },
@@ -106,7 +97,7 @@ lib({
   }
 })
   .then(function (logs: any) {
-    _.each(logs, (log: any, i: number) => {
+    _.each(logs, (log: string[][], i: number) => {
       const coloredText: string = _.map<string[], string>(log, (l: string[], index: number) => {
         const colorName: string = USEFUL_COLORS[index % USEFUL_COLORS.length]
         return colors[colorName](l)
