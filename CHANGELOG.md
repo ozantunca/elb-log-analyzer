@@ -1,3 +1,7 @@
+# 1.1.0
+- Updated dependencies.
+- Migrated to Typescript
+
 # 1.0.7
 - Updated dependencies.
 
