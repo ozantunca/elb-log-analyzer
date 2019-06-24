@@ -1,6 +1,6 @@
 {
   "name": "elb-log-analyzer",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Log Analyzer for AWS Elastic Load Balancer",
   "main": "./dist/lib.js",
   "bin": {
@@ -24,7 +24,7 @@
   "preferGlobal": true,
   "dependencies": {
     "colors": "^1.3.3",
-    "glob": "^7.1.3",
+    "glob": "^7.1.4",
     "lodash": "^4.17.11",
     "optimist": "^0.6.1",
     "progress": "^2.0.3"
@@ -39,26 +39,26 @@
   "readmeFilename": "README.md",
   "homepage": "https://github.com/ozantunca/elb-log-analyzer",
   "devDependencies": {
-    "@babel/cli": "^7.2.3",
-    "@babel/core": "^7.3.4",
-    "@babel/preset-env": "^7.3.4",
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
     "@babel/preset-typescript": "^7.3.3",
-    "@types/async": "^2.4.1",
+    "@types/async": "^3.0.0",
     "@types/glob": "^7.1.1",
-    "@types/lodash": "^4.14.121",
+    "@types/lodash": "^4.14.134",
     "@types/progress": "^2.0.3",
-    "@typescript-eslint/parser": "^1.4.2",
-    "async": "^2.6.2",
-    "babel-eslint": "^10.0.1",
+    "@typescript-eslint/parser": "^1.11.0",
+    "async": "^3.1.0",
+    "babel-eslint": "^10.0.2",
     "chai": "^4.2.0",
-    "eslint": "^5.14.1",
+    "eslint": "^6.0.0",
     "eslint-config-standard": "^12.0.0",
-    "eslint-plugin-import": "^2.16.0",
-    "eslint-plugin-node": "^8.0.1",
-    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-import": "^2.17.3",
+    "eslint-plugin-node": "^9.1.0",
+    "eslint-plugin-promise": "^4.1.1",
     "eslint-plugin-standard": "^4.0.0",
-    "mocha": "^6.0.2",
-    "ts-node": "^8.0.2",
-    "typescript": "^3.3.3333"
+    "mocha": "^6.1.4",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.2"
   }
 }
