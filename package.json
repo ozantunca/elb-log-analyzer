@@ -45,6 +45,7 @@
     "@babel/preset-env": "^7.5.5",
     "@babel/preset-typescript": "^7.3.3",
     "@semantic-release/commit-analyzer": "^6.3.0",
+    "@semantic-release/github": "^5.4.2",
     "@semantic-release/npm": "^5.1.13",
     "@types/async": "^3.0.1",
     "@types/glob": "^7.1.1",
