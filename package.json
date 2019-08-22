@@ -34,7 +34,8 @@
     "build": "tsc --noEmit && babel src/lib.ts src/cli.ts --out-dir dist --extensions \".ts,.tsx\"",
     "dev": "tsc --noEmit && babel src/lib.ts src/cli.ts --out-dir dist --extensions \".ts,.tsx\" --watch",
     "lint": "eslint src/*",
-    "lint:fix": "eslint src/* --fix"
+    "lint:fix": "eslint src/* --fix",
+    "publish": "semantic-release"
   },
   "readmeFilename": "README.md",
   "homepage": "https://github.com/ozantunca/elb-log-analyzer",
@@ -43,6 +44,8 @@
     "@babel/core": "^7.5.5",
     "@babel/preset-env": "^7.5.5",
     "@babel/preset-typescript": "^7.3.3",
+    "@semantic-release/commit-analyzer": "^6.3.0",
+    "@semantic-release/npm": "^5.1.13",
     "@types/async": "^3.0.1",
     "@types/glob": "^7.1.1",
     "@types/lodash": "^4.14.137",
@@ -58,6 +61,7 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
     "mocha": "^6.2.0",
+    "semantic-release": "^15.13.21",
     "ts-node": "^8.3.0",
     "typescript": "^3.5.3"
   }
