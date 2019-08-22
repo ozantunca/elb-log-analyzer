@@ -143,10 +143,8 @@ function generateProcessor ({
   const COUNT_INDEX = requestedColumns.indexOf('count')
 
   if (COUNT_INDEX > -1) {
-    let counts: {
-      [key: string]: number
-    } = {}
-    let tempCols = requestedColumns.slice(0)
+    const counts: { [key: string]: number } = {}
+    const tempCols = requestedColumns.slice(0)
 
     tempCols.splice(COUNT_INDEX, 1)
 
@@ -156,7 +154,7 @@ function generateProcessor ({
           return
         }
 
-        let parsedLineAsObject: ParsedLine | undefined = parseLine(line)
+        const parsedLineAsObject: ParsedLine | undefined = parseLine(line)
 
         if (!parsedLineAsObject) {
           return
@@ -295,7 +293,7 @@ function parseLine (line: string): ParsedLine | undefined {
     type = ATTRIBUTES.shift()
   }
 
-  let parsedLine: ParsedLine = {
+  const parsedLine: ParsedLine = {
     timestamp: ATTRIBUTES[0],
     elb: ATTRIBUTES[1],
     client: String(ATTRIBUTES[2]).split(':')[0],

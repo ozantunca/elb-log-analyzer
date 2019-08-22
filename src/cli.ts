@@ -10,8 +10,8 @@ import { LibraryOptions } from '../types/library'
 const USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
 
 const colors: any = require('colors/safe')
-let options: CLIOptions = require('optimist').argv
-let files = options._
+const options: CLIOptions = require('optimist').argv
+const files = options._
 let bar: ProgressBar
 
 if (options.version || options.v) {
@@ -69,7 +69,7 @@ _.each(options, function (arg: any, key: string) {
   let match = key.match(/^p(refix){0,1}([0-9]+)$/)
 
   if (match && !isNaN(Number(match[2]))) {
-    let index: number = Number(match[2]) - 1
+    const index: number = Number(match[2]) - 1
     parsedOptions.prefixes[index] = arg
     return
   }
@@ -77,7 +77,7 @@ _.each(options, function (arg: any, key: string) {
   match = key.match(/^c(ol){0,1}([0-9]+)$/)
 
   if (match && !isNaN(Number(match[2]))) {
-    let index: number = Number(match[2]) - 1
+    const index: number = Number(match[2]) - 1
     parsedOptions.cols[index] = arg
   }
 })
