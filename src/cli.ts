@@ -4,8 +4,8 @@ import _ from 'lodash'
 import ProgressBar from 'progress'
 import fs from 'fs'
 import path from 'path'
-import { CLIOptions } from '../types/cli'
-import { LibraryOptions } from '../types/library'
+import { CLIOptions } from './types/cli'
+import { LibraryOptions } from './types/library'
 
 const USEFUL_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
 

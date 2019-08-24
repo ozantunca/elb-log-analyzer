@@ -2,7 +2,7 @@ import fs from 'fs'
 import readline from 'readline'
 import _ from 'lodash'
 import { promisify } from 'util'
-import { ParserOptions, LibraryOptions, ParsedLine } from '../types/library'
+import { ParserOptions, LibraryOptions, ParsedLine } from './types/library'
 
 const glob: Function = promisify(require('glob'))
 const ALL_FIELDS = [

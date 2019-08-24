@@ -1,4 +1,5 @@
-export type Column =  'type' | 'timestamp' | 'elb' | 'client:port' | 'client' | 'backend:port' | 'backend' | 'request_processing_time' |
+/* eslint-disable camelcase */
+export type Column = 'type' | 'timestamp' | 'elb' | 'client:port' | 'client' | 'backend:port' | 'backend' | 'request_processing_time' |
 'backend_processing_time' | 'response_processing_time' | 'elb_status_code' | 'backend_status_code' |
 'received_bytes' | 'sent_bytes' | 'request' | 'requested_resource' | 'user_agent' | 'total_time' | 'count' |
 'target_group_arn' | 'trace_id' | 'ssl_cipher' | 'ssl_protocol'
