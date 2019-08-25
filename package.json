@@ -31,7 +31,8 @@
     "progress": "^2.0.3"
   },
   "scripts": {
-    "test": "npm run lint && npm run build && jest",
+    "build-test": "npm run lint && npm run build && jest",
+    "test": "npm run lint && jest",
     "build": "tsc -p tsconfig.json",
     "lint": "eslint ./src/**/*",
     "lint:fix": "eslint ./src/**/* --fix",
