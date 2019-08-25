@@ -1,9 +1,10 @@
 #! /usr/bin/env node
-import lib from './lib'
 import _ from 'lodash'
 import ProgressBar from 'progress'
 import fs from 'fs'
 import path from 'path'
+
+import lib from './lib'
 import { CLIOptions } from './types/cli'
 import { LibraryOptions } from './types/library'
 
@@ -39,13 +40,13 @@ const parsedOptions: LibraryOptions = {
   prefixes: [],
   sortBy: options.sortBy - 1, // lib.js accepts sortBy starting with 0 while cli accepts starting with 1
   limit: options.limit || 10,
-  ascending: options.a
+  ascending: options.a,
 }
 
 if (!_.isEmpty(options.start)) {
   options.start = String(options.start)
 
-  if ((new Date(options.start)).toString() === 'Invalid Date') {
+  if (new Date(options.start).toString() === 'Invalid Date') {
     handler(new Error('Start date is invalid'))
     process.exit()
   } else {
@@ -56,7 +57,7 @@ if (!_.isEmpty(options.start)) {
 if (!_.isEmpty(options.end)) {
   options.end = String(options.end)
 
-  if ((new Date(options.end)).toString() === 'Invalid Date') {
+  if (new Date(options.end).toString() === 'Invalid Date') {
     handler(new Error('End date is invalid'))
     process.exit()
   } else {
@@ -65,12 +66,15 @@ if (!_.isEmpty(options.end)) {
 }
 
 // Parse prefixes and column choices
-_.each(options, function (arg: any, key: string) {
+_.each(options, function(arg: any, key: string) {
   let match = key.match(/^p(refix){0,1}([0-9]+)$/)
 
   if (match && !isNaN(Number(match[2]))) {
     const index: number = Number(match[2]) - 1
-    parsedOptions.prefixes[index] = arg
+
+    if (parsedOptions.prefixes) {
+      parsedOptions.prefixes[index] = arg
+    }
     return
   }
 
@@ -78,37 +82,39 @@ _.each(options, function (arg: any, key: string) {
 
   if (match && !isNaN(Number(match[2]))) {
     const index: number = Number(match[2]) - 1
-    parsedOptions.cols[index] = arg
+
+    if (parsedOptions.cols) {
+      parsedOptions.cols[index] = arg
+    }
   }
 })
 
 lib({
   ...parsedOptions,
-  onProgress () {
+  onProgress() {
     bar.tick()
   },
-  onStart (filenames: string[]) {
+  onStart(filenames: string[]) {
     bar = new ProgressBar(' processing [:bar] :percent :etas', {
       complete: '=',
       incomplete: ' ',
       width: 30,
-      total: filenames.length
+      total: filenames.length,
     })
-  }
+  },
 })
-  .then(function (logs: any) {
+  .then(function(logs: any) {
     _.each(logs, (log: string[][], i: number) => {
       const coloredText: string = _.map<string[], string>(log, (l: string[], index: number) => {
         const colorName: string = USEFUL_COLORS[index % USEFUL_COLORS.length]
         return colors[colorName](l)
-      })
-        .join(colors.white(' - '))
+      }).join(colors.white(' - '))
 
       console.log(colors.white(String(i + 1)) + ' - ' + coloredText)
     })
   })
   .catch(handler)
 
-function handler (err: Error) {
+function handler(err: Error) {
   console.log(`${colors.red('An error occured')}: `, colors.cyan(err.toString()))
 }
