@@ -5,6 +5,7 @@
 
 ELB log analyzer is a command line tool for parsing Elastic Load Balancer's access logs and getting quick statistics. Useful for detecting requests taking longest time, IPs making most requests and many other data that can be derived from log files. If you need help bulk downloading logs from your S3 bucket, try [elblogs](https://github.com/namirali/elblogs).
 
+<a href="https://www.buymeacoffee.com/7U6J1fT" target="_blank"><img src="https://bmc-cdn.nyc3.digitaloceanspaces.com/BMC-button-images/custom_images/purple_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a> If you like using the tool, consider buying me a coffee ☕️
 
 ## Installation
 ```sh
@@ -192,3 +193,6 @@ v0.3.0
 #### Roadmap
 - Will be usable as a library in addition to CLI usage
 - CLI will run multiple clusters to speed up the process and escape from memory limitations
+
+#### If you like what you see, consider buying me a coffee ☕️
+<a href="https://www.buymeacoffee.com/7U6J1fT" target="_blank"><img src="https://bmc-cdn.nyc3.digitaloceanspaces.com/BMC-button-images/custom_images/purple_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
