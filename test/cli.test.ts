@@ -1,5 +1,4 @@
-import { exec } from 'child_process'
-import async from 'async'
+import { exec, execSync } from 'child_process'
 
 function cleanStdout(stdout: string) {
   return stdout.replace(
@@ -82,33 +81,20 @@ describe('cli mode', function() {
     })
   })
 
-  it('custom column client and backend IPs w/o port', function(done) {
-    async.parallel(
-      [
-        async.apply(exec, 'node dist/cli.js logs/ --col2=client'),
-        async.apply(exec, 'node dist/cli.js logs/ --col2=backend'),
-      ],
-      function(err, results: string[][] | undefined) {
-        expect(err).toBeNull()
-        expect(results).not.toBeUndefined()
+  it('custom column client and backend IPs w/o port', done => {
+    const clientResult = execSync('node dist/cli.js logs/ --col2=client').toString()
+    const backendResult = execSync('node dist/cli.js logs/ --col2=backend').toString()
 
-        if (!results) {
-          throw new Error('Results are undefined')
-        }
+    expect(clientResult).not.toBeUndefined()
+    expect(backendResult).not.toBeUndefined()
 
-        // stderr
-        expect(cleanStdout(results[0][1])).toBe('\n')
-        expect(cleanStdout(results[1][1])).toBe('\n')
-
-        // stdout
-        expect(cleanStdout(results[0][0])).toBe(
-          '1 - 126 - 216.137.60.6\n2 - 78 - 54.239.167.74\n3 - 60 - 216.137.58.48\n4 - 57 - 95.7.142.5\n5 - 54 - 77.92.102.34\n6 - 36 - 54.239.171.99\n7 - 36 - 205.251.252.16\n8 - 33 - 54.240.156.59\n9 - 33 - 88.246.209.164\n10 - 33 - 95.14.129.124\n'
-        )
-        expect(cleanStdout(results[1][0])).toBe('1 - 1245 - 10.0.2.143\n2 - 759 - 10.0.0.215\n')
-
-        done()
-      }
+    // stdout
+    expect(cleanStdout(clientResult)).toBe(
+      '1 - 126 - 216.137.60.6\n2 - 78 - 54.239.167.74\n3 - 60 - 216.137.58.48\n4 - 57 - 95.7.142.5\n5 - 54 - 77.92.102.34\n6 - 36 - 54.239.171.99\n7 - 36 - 205.251.252.16\n8 - 33 - 54.240.156.59\n9 - 33 - 88.246.209.164\n10 - 33 - 95.14.129.124\n'
     )
+    expect(cleanStdout(backendResult)).toBe('1 - 1245 - 10.0.2.143\n2 - 759 - 10.0.0.215\n')
+
+    done()
   })
 
   it('multiple custom columns', function(done) {
@@ -260,5 +246,13 @@ describe('cli mode', function() {
       )
       done()
     })
+  })
+
+  it('should parse separate requested_resource fields', () => {
+    const result = execSync('node dist/cli.js logs --col2=requested_resource.host').toString()
+
+    expect(cleanStdout(result)).toBe(
+      '1 - 1209 - example.com:80\n2 - 507 - cf-source.example.com:80\n3 - 174 - example.com:443\n4 - 87 - www.example.com:80\n5 - 18 - ios.example.com:80\n6 - 9 - examp.le:80\n'
+    )
   })
 })

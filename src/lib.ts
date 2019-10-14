@@ -2,6 +2,7 @@ import fs from 'fs'
 import readline from 'readline'
 import _ from 'lodash'
 import { promisify } from 'util'
+import { parse } from 'url'
 import { ParserOptions, LibraryOptions, ParsedLine } from './types/library'
 
 const glob: Function = promisify(require('glob'))
@@ -29,6 +30,19 @@ const ALL_FIELDS = [
   'trace_id',
   'ssl_cipher',
   'ssl_protocol',
+  'requested_resource.pathname',
+  'requested_resource.host',
+  'requested_resource.protocol',
+  'requested_resource.port',
+  'requested_resource.hostname',
+  'requested_resource.path',
+  'requested_resource.origin',
+  'requested_resource.search',
+  'requested_resource.href',
+  'requested_resource.hash',
+  'requested_resource.searchParams',
+  'requested_resource.username',
+  'requested_resource.password',
 ]
 
 export default async function({
@@ -318,6 +332,23 @@ function parseLine(line: string): ParsedLine | undefined {
     type = ATTRIBUTES.shift()
   }
 
+  const requested_resource = String(ATTRIBUTES[11]).split(' ')[1]
+  const parsedURL = _.pick(parse(requested_resource), [
+    'pathname',
+    'host',
+    'protocol',
+    'port',
+    'hostname',
+    'path',
+    'origin',
+    'search',
+    'href',
+    'hash',
+    'searchParams',
+    'username',
+    'password',
+  ])
+
   const parsedLine: ParsedLine = {
     timestamp: ATTRIBUTES[0],
     elb: ATTRIBUTES[1],
@@ -333,7 +364,15 @@ function parseLine(line: string): ParsedLine | undefined {
     received_bytes: ATTRIBUTES[9],
     sent_bytes: ATTRIBUTES[10],
     request: ATTRIBUTES[11],
-    requested_resource: String(ATTRIBUTES[11]).split(' ')[1],
+    requested_resource,
+    ..._.reduce(
+      parsedURL,
+      (merged, current, key) => ({
+        ...merged,
+        [`requested_resource.${key}`]: current,
+      }),
+      {}
+    ),
     user_agent: ATTRIBUTES[12],
     total_time: Number(ATTRIBUTES[4]) + Number(ATTRIBUTES[5]) + Number(ATTRIBUTES[6]),
     ssl_cipher: ATTRIBUTES[13],

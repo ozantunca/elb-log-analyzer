@@ -44,12 +44,10 @@
     "@semantic-release/commit-analyzer": "^6.3.0",
     "@semantic-release/github": "^5.4.2",
     "@semantic-release/npm": "^5.1.15",
-    "@types/async": "^3.0.1",
     "@types/glob": "^7.1.1",
     "@types/lodash": "^4.14.137",
     "@types/progress": "^2.0.3",
-    "@typescript-eslint/parser": "^2.0.0",
-    "async": "^3.1.0",
+    "@typescript-eslint/parser": "^2.4.0",
     "chai": "^4.2.0",
     "eslint": "^6.2.1",
     "eslint-config-standard": "^14.0.1",
@@ -59,8 +57,8 @@
     "eslint-plugin-standard": "^4.0.1",
     "jest": "^24.9.0",
     "semantic-release": "^15.13.24",
-    "ts-jest": "^24.0.2",
-    "typescript": "^3.5.3"
+    "ts-jest": "^24.1.0",
+    "typescript": "^3.6.4"
   },
   "files": [
     "package.json",

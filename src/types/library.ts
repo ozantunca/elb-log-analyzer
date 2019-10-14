@@ -63,6 +63,19 @@ export interface ParsedLine {
   sent_bytes: string
   request: string
   requested_resource: string
+  'requested_resource.pathname'?: string
+  'requested_resource.host'?: string
+  'requested_resource.protocol'?: string
+  'requested_resource.port'?: string
+  'requested_resource.hostname'?: string
+  'requested_resource.path'?: string
+  'requested_resource.origin'?: string
+  'requested_resource.search'?: string
+  'requested_resource.href'?: string
+  'requested_resource.hash'?: string
+  'requested_resource.searchParams'?: string
+  'requested_resource.username'?: string
+  'requested_resource.password'?: string
   user_agent: string
   total_time: number
   ssl_cipher: string
