@@ -23,6 +23,19 @@ export type Column =
   | 'trace_id'
   | 'ssl_cipher'
   | 'ssl_protocol'
+  | 'requested_resource.pathname'
+  | 'requested_resource.host'
+  | 'requested_resource.protocol'
+  | 'requested_resource.port'
+  | 'requested_resource.hostname'
+  | 'requested_resource.path'
+  | 'requested_resource.origin'
+  | 'requested_resource.search'
+  | 'requested_resource.href'
+  | 'requested_resource.hash'
+  | 'requested_resource.searchParams'
+  | 'requested_resource.username'
+  | 'requested_resource.password'
 
 export interface ParserOptions {
   requestedColumns: Column[]
