@@ -242,7 +242,7 @@ elb-log-analyzer -v
 Example Output:
 
 ```
-v0.3.0
+v1.3.0
 ```
 
 #### Roadmap

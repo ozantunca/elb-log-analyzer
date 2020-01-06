@@ -12,7 +12,9 @@
     "no-console": "off",
     "import/no-extraneous-dependencies": "off",
     "no-underscore-dangle": "off",
-    "no-unused-vars": "off"
+    "no-unused-vars": "off",
+    "space-before-function-paren": "off",
+    "comma-dangle": "off"
   },
   "root": true
 }
