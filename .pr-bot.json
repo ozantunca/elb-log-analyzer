@@ -3,12 +3,10 @@
     "changedFiles": {
       "allowed": ["package.json", "package-lock.json"]
     },
-    "properties": [
-      {
-        "files": ["package.json"],
-        "allowed": ["dependencies", "devDependencies"]
-      }
-    ],
+    "properties": [{
+      "files": ["package.json"],
+      "allowed": ["dependencies", "devDependencies"]
+    }],
     "versionBump": {
       "packageManager": "npm",
       "versionBumpType": "minor"
