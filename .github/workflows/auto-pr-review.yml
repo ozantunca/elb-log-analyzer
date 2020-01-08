@@ -10,6 +10,6 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
-    - uses: omio-labs/pr-reviewer-bot
+    - uses: omio-labs/pr-reviewer-bot@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
