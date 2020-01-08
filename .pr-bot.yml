@@ -2,7 +2,7 @@ approvalRules:
   - changedFiles:
       allowed:
         - "package.json"
-        - "package-lock.json"
+        - "yarn.lock"
     properties:
       - files: 
           - "package.json"
