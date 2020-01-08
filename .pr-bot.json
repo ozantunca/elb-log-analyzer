@@ -1,15 +1,19 @@
 {
-  "approvalRules": [{
-    "changedFiles": {
-      "allowed": ["package.json", "package-lock.json"]
-    },
-    "properties": [{
-      "files": ["package.json"],
-      "allowed": ["dependencies", "devDependencies"]
-    }],
-    "versionBump": {
-      "packageManager": "npm",
-      "versionBumpType": "minor"
+  "approvalRules": [
+    {
+      "changedFiles": {
+        "allowed": ["package.json", "packagelock.json"]
+      },
+      "properties": [
+        {
+          "files": ["package.json"],
+          "allowed": ["dependencies", "devDependencies"]
+        }
+      ],
+      "versionBump": {
+        "packageManager": "npm",
+        "versionBumpType": "minor"
+      }
     }
-  }]
+  ]
 }
