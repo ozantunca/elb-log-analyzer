@@ -9,6 +9,6 @@ approvalRules:
         allowed:
           - dependencies
           - devDependencies
-    versionBump
+    versionBump:
       packageManager: npm
       versionBumpType: minor
