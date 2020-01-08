@@ -1,0 +1,15 @@
+
+name: Auto PR Review
+
+on: [pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+    - uses: omio-labs/pr-reviewer-bot
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
