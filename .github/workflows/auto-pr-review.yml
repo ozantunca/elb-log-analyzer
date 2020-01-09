@@ -9,6 +9,6 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
-    - uses: omio-labs/pr-reviewer-bot@releases/v1
+    - uses: omio-labs/pr-reviewer-bot@v1
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
