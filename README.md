@@ -14,7 +14,7 @@ ELB log analyzer is a command line tool for parsing Elastic Load Balancer's acce
 npm install -g elb-log-analyzer
 ```
 
-Alternatively you can use the tool without download by running it via `npx`. Example:
+Alternatively you can use the tool without downloading by running it via `npx`. Example:
 ```sh
 npx elb-log-analyzer ./logs
 ```
