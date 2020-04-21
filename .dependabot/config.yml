@@ -5,3 +5,7 @@ update_configs:
     update_schedule: "daily"
     commit_message:
       prefix: "chore"
+    automerged_updates:
+      - match:
+          dependency_type: "development"
+          update_type: "semver:minor"
