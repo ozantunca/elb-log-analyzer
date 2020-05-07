@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 export type Column =
   | 'type'
   | 'timestamp'
