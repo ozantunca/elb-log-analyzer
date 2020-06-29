@@ -1,7 +1,7 @@
 import analyzer from '../dist/lib'
 
-describe('library mode', function() {
-  it('should analyze directory', function(done) {
+describe('library mode', function () {
+  it('should analyze directory', function (done) {
     var result = [
       [99, 'http://example.com:80/images/trans.png'],
       [99, 'http://example.com:80/?mode=json&after=&iteration=1'],
@@ -17,8 +17,8 @@ describe('library mode', function() {
 
     analyzer({
       files: ['./logs'],
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -26,7 +26,7 @@ describe('library mode', function() {
     })
   })
 
-  it('should analyze a file', function(done) {
+  it('should analyze a file', function (done) {
     var result = [
       [33, 'http://example.com:80/images/trans.png'],
       [33, 'http://example.com:80/?mode=json&after=&iteration=1'],
@@ -42,8 +42,8 @@ describe('library mode', function() {
 
     analyzer({
       files: ['./logs/AWSLogs.log'],
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -51,7 +51,7 @@ describe('library mode', function() {
     })
   })
 
-  it('should analyze multiple files', function(done) {
+  it('should analyze multiple files', function (done) {
     var result = [
       [66, 'http://example.com:80/images/trans.png'],
       [66, 'http://example.com:80/?mode=json&after=&iteration=1'],
@@ -67,8 +67,8 @@ describe('library mode', function() {
 
     analyzer({
       files: ['logs/AWSLogs.log', 'logs/inner-logs/AWSLogs2.log'],
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -76,7 +76,7 @@ describe('library mode', function() {
     })
   })
 
-  it('ascending order', function(done) {
+  it('ascending order', function (done) {
     var result = [
       [1, 'http://example.com:443/yasam/iliskiler-haberleri'],
       [1, 'wss://example.com:443/favicons/apple-touch-icon-180x180.png'],
@@ -93,8 +93,8 @@ describe('library mode', function() {
     analyzer({
       files: ['logs'],
       ascending: true,
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -102,7 +102,7 @@ describe('library mode', function() {
     })
   })
 
-  it('custom sortBy', function(done) {
+  it('custom sortBy', function (done) {
     var result = [
       [1, 'wss://example.com:443/index.json?scope=galleries&after=1446725611907&iteration=4'],
       [1, 'wss://example.com:443/favicons/apple-touch-icon-180x180.png'],
@@ -119,8 +119,8 @@ describe('library mode', function() {
     analyzer({
       files: ['logs'],
       sortBy: 1,
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -128,7 +128,7 @@ describe('library mode', function() {
     })
   })
 
-  it('custom sortBy ascending', function(done) {
+  it('custom sortBy ascending', function (done) {
     var result = [
       [1, 'h2://example.com:443/?mode=json&after=&iteration=1'],
       [2, 'h2://example.com:443/example-ozel/test-haberleri'],
@@ -146,8 +146,8 @@ describe('library mode', function() {
       files: ['logs'],
       ascending: true,
       sortBy: 1,
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -155,7 +155,7 @@ describe('library mode', function() {
     })
   })
 
-  it('custom column', function(done) {
+  it('custom column', function (done) {
     var result = [
       [18, '95.15.16.130:58685'],
       [18, '216.137.58.48:40350'],
@@ -172,8 +172,8 @@ describe('library mode', function() {
     analyzer({
       files: ['logs'],
       cols: ['count', 'client:port'],
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -181,7 +181,7 @@ describe('library mode', function() {
     })
   })
 
-  it('custom column client and backend IPs w/o port', function(done) {
+  it('custom column client and backend IPs w/o port', function (done) {
     var result1 = [
       [126, '216.137.60.6'],
       [78, '54.239.167.74'],
@@ -194,7 +194,10 @@ describe('library mode', function() {
       [33, '88.246.209.164'],
       [33, '95.14.129.124'],
     ]
-    var result2 = [[1245, '10.0.2.143'], [759, '10.0.0.215']]
+    var result2 = [
+      [1245, '10.0.2.143'],
+      [759, '10.0.0.215'],
+    ]
 
     Promise.all([
       analyzer({
@@ -206,13 +209,13 @@ describe('library mode', function() {
         files: ['logs'],
         cols: ['count', 'backend'],
       }),
-    ]).then(function(logs) {
-      logs[0].forEach(function(log, i) {
+    ]).then(function (logs) {
+      logs[0].forEach(function (log, i) {
         expect(result1[i][0]).toBe(log[0])
         expect(result1[i][1]).toBe(log[1])
       })
 
-      logs[1].forEach(function(log, i) {
+      logs[1].forEach(function (log, i) {
         expect(result2[i][0]).toBe(log[0])
         expect(result2[i][1]).toBe(log[1])
       })
@@ -220,7 +223,7 @@ describe('library mode', function() {
     })
   })
 
-  it('multiple custom columns', function(done) {
+  it('multiple custom columns', function (done) {
     var result = [
       [2.094293, '205.251.252.16:5173'],
       [2.094293, '205.251.252.16:5173'],
@@ -237,16 +240,16 @@ describe('library mode', function() {
     analyzer({
       files: ['logs'],
       cols: ['total_time', 'client:port'],
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
-        expect(result[i][0]).toBe(log[0])
-        expect(result[i][1]).toBe(log[1])
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
+        expect(log[0]).toBe(result[i][0])
+        expect(log[1]).toBe(result[i][1])
       })
       done()
     })
   })
 
-  it('multiple custom columns with sortBy', function(done) {
+  it('multiple custom columns with sortBy', function (done) {
     var result = [
       [3, '95.9.8.42:49810', '301'],
       [3, '95.70.131.112:38452', '200'],
@@ -264,8 +267,8 @@ describe('library mode', function() {
       files: ['logs'],
       cols: ['count', 'client:port', 'elb_status_code'],
       sortBy: 1,
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -273,7 +276,7 @@ describe('library mode', function() {
     })
   })
 
-  it('prefixing', function(done) {
+  it('prefixing', function (done) {
     var result = [
       [18, '95.15.16.130:58685', '200'],
       [15, '95.14.129.124:49456', '200'],
@@ -291,8 +294,8 @@ describe('library mode', function() {
       files: ['logs'],
       cols: ['count', 'client:port', 'elb_status_code'],
       prefixes: ['', '95'],
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -300,7 +303,7 @@ describe('library mode', function() {
     })
   })
 
-  it('prefixing count field', function(done) {
+  it('prefixing count field', function (done) {
     var result = [
       [18, '95.15.16.130:58685', '200'],
       [18, '216.137.58.48:40350', '200'],
@@ -318,8 +321,8 @@ describe('library mode', function() {
       files: ['logs'],
       cols: ['count', 'client:port', 'elb_status_code'],
       prefixes: ['1'],
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -327,7 +330,7 @@ describe('library mode', function() {
     })
   })
 
-  it('prefixing count field with sortBy', function(done) {
+  it('prefixing count field with sortBy', function (done) {
     var result = [
       [12, '195.142.92.249:52094', '200'],
       [18, '216.137.58.48:40350', '200'],
@@ -347,8 +350,8 @@ describe('library mode', function() {
       prefixes: ['1'],
       sortBy: 1,
       ascending: true,
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -356,7 +359,7 @@ describe('library mode', function() {
     })
   })
 
-  it('custom limits for the list', function(done) {
+  it('custom limits for the list', function (done) {
     var result = [
       [99, 'http://example.com:80/images/trans.png'],
       [99, 'http://example.com:80/?mode=json&after=&iteration=1'],
@@ -388,8 +391,8 @@ describe('library mode', function() {
     analyzer({
       files: ['logs'],
       limit: 25,
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -397,7 +400,7 @@ describe('library mode', function() {
     })
   })
 
-  it('custom limits with sortBy', function(done) {
+  it('custom limits with sortBy', function (done) {
     var result = [
       [1, 'wss://example.com:443/index.json?scope=galleries&after=1446725611907&iteration=4'],
       [1, 'wss://example.com:443/favicons/apple-touch-icon-180x180.png'],
@@ -425,8 +428,8 @@ describe('library mode', function() {
       files: ['logs'],
       limit: 20,
       sortBy: 1,
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -434,7 +437,7 @@ describe('library mode', function() {
     })
   })
 
-  it('custom limit with custom columns and prefixing', function(done) {
+  it('custom limit with custom columns and prefixing', function (done) {
     var result = [
       [18, '95.15.16.130:58685', '200'],
       [18, '216.137.58.48:40350', '200'],
@@ -447,8 +450,8 @@ describe('library mode', function() {
       files: ['logs'],
       limit: 5,
       cols: ['count', 'client:port', 'elb_status_code'],
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -456,7 +459,7 @@ describe('library mode', function() {
     })
   })
 
-  it('request more records than there are', function(done) {
+  it('request more records than there are', function (done) {
     var result = [
       [18, '95.15.16.130:58685', '200'],
       [15, '95.14.129.124:49456', '200'],
@@ -504,8 +507,8 @@ describe('library mode', function() {
       limit: 5000,
       cols: ['count', 'client:port', 'elb_status_code'],
       prefixes: ['', '95'],
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -513,7 +516,7 @@ describe('library mode', function() {
     })
   })
 
-  it('filtering by date', function(done) {
+  it('filtering by date', function (done) {
     var result = [
       [6, 'http://example.com:80/images/logo/example-o-logo.png'],
       [6, 'http://example.com:80/images/logo/google-play.png'],
@@ -531,8 +534,8 @@ describe('library mode', function() {
       files: ['logs'],
       start: new Date('2015-11-07T18:45:34.501734Z'),
       end: new Date('2015-11-07T18:45:34.768481Z'),
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -540,7 +543,7 @@ describe('library mode', function() {
     })
   })
 
-  it('filtering by date 2', function(done) {
+  it('filtering by date 2', function (done) {
     var result = [
       [45, 'http://example.com:80/?mode=json&after=&iteration=1'],
       [45, 'http://example.com:80/img/user/000000000000000000000000'],
@@ -557,8 +560,8 @@ describe('library mode', function() {
     analyzer({
       files: ['logs'],
       end: new Date('2015-11-07T18:45:35.368553Z'),
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -566,14 +569,20 @@ describe('library mode', function() {
     })
   })
 
-  it('should parse application ELB logs as well', function(done) {
-    var result = [[219, 'http'], [161, 'h2'], [148, 'https'], [71, 'ws'], [69, 'wss']]
+  it('should parse application ELB logs as well', function (done) {
+    var result = [
+      [219, 'http'],
+      [161, 'h2'],
+      [148, 'https'],
+      [71, 'ws'],
+      [69, 'wss'],
+    ]
 
     analyzer({
       files: ['logs/AppELBLog.log'],
       cols: ['count', 'type'],
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })
@@ -581,14 +590,20 @@ describe('library mode', function() {
     })
   })
 
-  it('should parse application ELB logs in directory as well', function(done) {
-    var result = [[219, 'http'], [161, 'h2'], [148, 'https'], [71, 'ws'], [69, 'wss']]
+  it('should parse application ELB logs in directory as well', function (done) {
+    var result = [
+      [219, 'http'],
+      [161, 'h2'],
+      [148, 'https'],
+      [71, 'ws'],
+      [69, 'wss'],
+    ]
 
     analyzer({
       files: ['logs'],
       cols: ['count', 'type'],
-    }).then(function(logs) {
-      logs.forEach(function(log, i) {
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
         expect(result[i][0]).toBe(log[0])
         expect(result[i][1]).toBe(log[1])
       })

@@ -1,44 +1,6 @@
 import { URL } from 'url'
-import reduce from 'lodash/reduce'
 
-export interface ParsedLine {
-  timestamp: string
-  elb: string
-  client: string
-  'client:port': string
-  backend: string
-  'backend:port': string
-  request_processing_time: number
-  backend_processing_time: number
-  response_processing_time: number
-  elb_status_code: string
-  backend_status_code: string
-  received_bytes: string
-  sent_bytes: string
-  request: string
-  requested_resource: string
-  'requested_resource.pathname'?: string
-  'requested_resource.host'?: string
-  'requested_resource.protocol'?: string
-  'requested_resource.port'?: string
-  'requested_resource.hostname'?: string
-  'requested_resource.path'?: string
-  'requested_resource.origin'?: string
-  'requested_resource.search'?: string
-  'requested_resource.href'?: string
-  'requested_resource.hash'?: string
-  'requested_resource.searchParams'?: string
-  'requested_resource.username'?: string
-  'requested_resource.password'?: string
-  user_agent: string
-  total_time: number
-  ssl_cipher: string
-  ssl_protocol: string
-  target_group_arn: string
-  trace_id: string
-  type?: string
-  [key: string]: number | string | undefined
-}
+import { ParsedLine } from '../types/library'
 
 export function parseLine(line: string): ParsedLine | undefined {
   const ATTRIBUTES = line.match(/[^\s"']+|"([^"]*)"/gi)
@@ -54,6 +16,24 @@ export function parseLine(line: string): ParsedLine | undefined {
 
   const requestedResource = String(ATTRIBUTES[11]).split(' ')[1]
   const parsedURL = new URL(requestedResource)
+  const parsedURLWithCorrectKeys: { [key: string]: any } = {}
+
+  ;([
+    'host',
+    'hostname',
+    'href',
+    'pathname',
+    'protocol',
+    'port',
+    'search',
+    'username',
+    'password',
+    'origin',
+    'searchParams',
+    'hash',
+  ] as (keyof URL)[]).forEach((key: keyof URL) => {
+    parsedURLWithCorrectKeys[`requested_resource.${key}`] = parsedURL[key]
+  })
 
   const parsedLine: ParsedLine = {
     timestamp: ATTRIBUTES[0],
@@ -71,14 +51,6 @@ export function parseLine(line: string): ParsedLine | undefined {
     sent_bytes: ATTRIBUTES[10],
     request: ATTRIBUTES[11],
     requested_resource: requestedResource,
-    ...reduce(
-      parsedURL,
-      (merged, current, key) => ({
-        ...merged,
-        [`requested_resource.${key}`]: current,
-      }),
-      {}
-    ),
     user_agent: ATTRIBUTES[12],
     total_time: Number(ATTRIBUTES[4]) + Number(ATTRIBUTES[5]) + Number(ATTRIBUTES[6]),
     ssl_cipher: ATTRIBUTES[13],
@@ -86,6 +58,7 @@ export function parseLine(line: string): ParsedLine | undefined {
     target_group_arn: ATTRIBUTES[15],
     trace_id: ATTRIBUTES[16],
     type,
+    ...parsedURLWithCorrectKeys,
   }
 
   return parsedLine

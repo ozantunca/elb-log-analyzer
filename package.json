@@ -31,7 +31,7 @@
   },
   "scripts": {
     "build-test": "npm run lint && npm run build && jest",
-    "test": "npm run lint && jest",
+    "test": "npm run lint && npm run build && jest",
     "build": "tsc -p tsconfig.json",
     "lint": "eslint ./src/**/*",
     "lint:fix": "eslint ./src/**/* --fix",

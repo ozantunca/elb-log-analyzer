@@ -1,11 +1,15 @@
-import { some, chain, map, isEmpty, values, pick } from 'lodash'
+import { some, chain, isEmpty, values, pick } from 'lodash'
 
 import { parseLine } from './parseLine'
 import { filterByDate } from './filter'
-import { ParserOptions } from '../types/library'
+import { ParserOptions, ColumnName, ColumnValue } from '../types/library'
 
 // sort while inserting
-function splice(lines: string[][], newLine: string[], sortBy: number) {
+function splice(lines: ColumnValue[][], newLine: any[], sortBy: number) {
+  if (newLine.some((val) => !val)) {
+    return lines
+  }
+
   let len = lines.length
   let compare
 
@@ -13,7 +17,7 @@ function splice(lines: string[][], newLine: string[], sortBy: number) {
     if (typeof lines[len][sortBy] === 'number' && typeof newLine[sortBy] === 'number') {
       compare = lines[len][sortBy] < newLine[sortBy] ? -1 : 1
     } else {
-      compare = String(lines[len][sortBy]).localeCompare(newLine[sortBy])
+      compare = String(lines[len][sortBy]).localeCompare(newLine[sortBy].toString())
     }
 
     if (compare < 0) {
@@ -27,7 +31,7 @@ function splice(lines: string[][], newLine: string[], sortBy: number) {
 
 interface ProcessorType {
   process(filterFunc: Function | null, line: string): void
-  getResults(): string[][]
+  getResults(): ColumnValue[][]
 }
 
 export function generateProcessor({
@@ -39,13 +43,13 @@ export function generateProcessor({
   start,
   end,
 }: ParserOptions): ProcessorType {
-  const COUNT_INDEX = requestedColumns.indexOf('count')
+  const indexOfCountColumn = requestedColumns.indexOf('count')
 
-  if (COUNT_INDEX > -1) {
+  if (indexOfCountColumn > -1) {
     const counts: { [key: string]: number } = {}
     const tempCols = requestedColumns.slice(0)
 
-    tempCols.splice(COUNT_INDEX, 1)
+    tempCols.splice(indexOfCountColumn, 1)
 
     return {
       process(filterFunc, line) {
@@ -55,6 +59,7 @@ export function generateProcessor({
 
         const parsedLineAsObject = parseLine(line)
 
+        // console.log('parsedLineAsObject', line)
         if (!parsedLineAsObject) {
           return
         }
@@ -67,7 +72,9 @@ export function generateProcessor({
         const parsedLineWithRequestedColumns = values(pick(parsedLineAsObject, tempCols))
 
         // Drop the line if any of the columns requested does not exist in this line
-        if (some(parsedLineWithRequestedColumns, (column: any) => !column && column !== '0')) {
+        if (
+          some(parsedLineWithRequestedColumns, (column: ColumnName) => !column && column !== 'null')
+        ) {
           return
         }
 
@@ -83,17 +90,15 @@ export function generateProcessor({
       },
 
       getResults() {
-        let q = chain(counts)
-          .toPairs()
-          .map(function ([key, countNumber]: [string, number]) {
-            const line = JSON.parse(key)
-            line.splice(COUNT_INDEX, 0, countNumber)
-            return line
-          })
+        let q = chain(counts).map(function (countNumber, key) {
+          const line = JSON.parse(key)
+          line.splice(indexOfCountColumn, 0, countNumber)
+          return line
+        })
 
-        if (prefixes && prefixes[COUNT_INDEX]) {
+        if (prefixes && prefixes[indexOfCountColumn]) {
           q = q.filter((line: string) =>
-            line[COUNT_INDEX].toString().startsWith(prefixes[COUNT_INDEX])
+            line[indexOfCountColumn].toString().startsWith(prefixes[indexOfCountColumn])
           )
         }
 
@@ -101,22 +106,25 @@ export function generateProcessor({
       },
     }
   } else {
-    const temporaryColumns = requestedColumns.slice(0)
-    let outputLines: string[][] = []
+    let outputLines: ColumnValue[][] = []
 
     return {
       process(filterFunc, line) {
-        let lineObj: any = parseLine(line)
+        const lineObj = parseLine(line)
+
+        if (!lineObj) {
+          return
+        }
 
         // filter lines by date if requested
         if ((start || end) && filterByDate(lineObj, start, end)) {
           return
         }
 
-        lineObj = map(temporaryColumns, (column: string) => lineObj[column])
+        const mappedLine: any = values(pick(lineObj, ...requestedColumns))
 
         // Drop the line if any of the columns requested does not exist in this line
-        if (some(lineObj, (column: string) => !column && column !== '0')) {
+        if (some(mappedLine, (columnValue: ColumnValue) => typeof columnValue === 'undefined')) {
           return
         }
 
@@ -126,21 +134,21 @@ export function generateProcessor({
 
         // Add lines until the limit is reached
         if (outputLines.length < limit) {
-          outputLines = splice(outputLines, lineObj, sortBy)
+          outputLines = splice(outputLines, mappedLine, sortBy)
           return
         }
 
         // Drop lines immediately that are below the last item
         // of currently sorted list. Otherwise add them and
         // drop the last item.
-        let compare: string | number | undefined
+        let compare: ColumnValue | undefined
         const firstLine = outputLines[0]
 
         if (firstLine) {
-          if (typeof firstLine[sortBy] === 'number' && typeof lineObj[sortBy] === 'number') {
-            compare = firstLine[sortBy] < lineObj[sortBy] ? -1 : 1
+          if (typeof firstLine[sortBy] === 'number' && typeof mappedLine[sortBy] === 'number') {
+            compare = firstLine[sortBy] < mappedLine[sortBy] ? -1 : 1
           } else {
-            compare = String(firstLine[sortBy]).localeCompare(lineObj[sortBy])
+            compare = String(firstLine[sortBy]).localeCompare(mappedLine[sortBy].toString())
           }
         }
 
@@ -148,7 +156,7 @@ export function generateProcessor({
           return
         }
 
-        outputLines = splice(outputLines, lineObj, sortBy)
+        outputLines = splice(outputLines, mappedLine, sortBy)
         outputLines.shift()
       },
 

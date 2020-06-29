@@ -1,43 +1,9 @@
-export type Column =
-  | 'type'
-  | 'timestamp'
-  | 'elb'
-  | 'client:port'
-  | 'client'
-  | 'backend:port'
-  | 'backend'
-  | 'request_processing_time'
-  | 'backend_processing_time'
-  | 'response_processing_time'
-  | 'elb_status_code'
-  | 'backend_status_code'
-  | 'received_bytes'
-  | 'sent_bytes'
-  | 'request'
-  | 'requested_resource'
-  | 'user_agent'
-  | 'total_time'
-  | 'count'
-  | 'target_group_arn'
-  | 'trace_id'
-  | 'ssl_cipher'
-  | 'ssl_protocol'
-  | 'requested_resource.pathname'
-  | 'requested_resource.host'
-  | 'requested_resource.protocol'
-  | 'requested_resource.port'
-  | 'requested_resource.hostname'
-  | 'requested_resource.path'
-  | 'requested_resource.origin'
-  | 'requested_resource.search'
-  | 'requested_resource.href'
-  | 'requested_resource.hash'
-  | 'requested_resource.searchParams'
-  | 'requested_resource.username'
-  | 'requested_resource.password'
+export type ColumnName = keyof ParsedLine
+
+export type ColumnValue = string | number
 
 export interface ParserOptions {
-  requestedColumns: Column[]
+  requestedColumns: ColumnName[]
   sortBy: number
   ascending: boolean
   limit: number
@@ -47,7 +13,7 @@ export interface ParserOptions {
 }
 
 export interface LibraryOptions {
-  cols?: Column[]
+  cols?: ColumnName[]
   files: string[]
   prefixes?: string[]
   sortBy?: number
@@ -95,5 +61,5 @@ export interface ParsedLine {
   target_group_arn: string
   trace_id: string
   type?: string
-  [key: string]: number | string | undefined
+  count?: number
 }
