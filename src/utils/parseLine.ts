@@ -14,7 +14,8 @@ export function parseLine(line: string): ParsedLine | undefined {
     type = ATTRIBUTES.shift()
   }
 
-  const requestedResource = String(ATTRIBUTES[11]).split(' ')[1]
+  const requestField = String(ATTRIBUTES[11])
+  const [method, requestedResource] = requestField.split(' ')
   const parsedURL = new URL(requestedResource)
   const parsedURLWithCorrectKeys: { [key: string]: any } = {}
 
@@ -49,7 +50,8 @@ export function parseLine(line: string): ParsedLine | undefined {
     backend_status_code: ATTRIBUTES[8],
     received_bytes: ATTRIBUTES[9],
     sent_bytes: ATTRIBUTES[10],
-    request: ATTRIBUTES[11],
+    request: requestField,
+    method: method.substring(1),
     requested_resource: requestedResource,
     user_agent: ATTRIBUTES[12],
     total_time: Number(ATTRIBUTES[4]) + Number(ATTRIBUTES[5]) + Number(ATTRIBUTES[6]),
