@@ -14,6 +14,7 @@ const AVAILABLE_COLUMNS = [
   'received_bytes',
   'sent_bytes',
   'request',
+  'method',
   'requested_resource',
   'user_agent',
   'total_time',

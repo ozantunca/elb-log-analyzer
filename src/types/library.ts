@@ -40,6 +40,7 @@ export interface ParsedLine {
   received_bytes: string
   sent_bytes: string
   request: string
+  method: string
   requested_resource: string
   'requested_resource.pathname'?: string
   'requested_resource.host'?: string

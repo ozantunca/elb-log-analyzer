@@ -610,4 +610,22 @@ describe('library mode', function () {
       done()
     })
   })
+
+  it('should be able to parse method field', function (done) {
+    var result = [
+      [1977, 'GET'],
+      [27, 'POST'],
+    ]
+
+    analyzer({
+      files: ['logs'],
+      cols: ['count', 'method'],
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
+        expect(result[i][0]).toBe(log[0])
+        expect(result[i][1]).toBe(log[1])
+      })
+      done()
+    })
+  })
 })
