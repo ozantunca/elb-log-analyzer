@@ -15,6 +15,7 @@ npm install -g elb-log-analyzer
 ```
 
 Alternatively you can use the tool without downloading by running it via `npx`. Example:
+
 ```sh
 npx elb-log-analyzer ./logs
 ```
@@ -66,7 +67,7 @@ By default log analyzer will count all requests and sort them in descending orde
 10 - 327: http://www.example.com:80/favicon.ico
 ```
 
-Values in columns can be set to any of the values in logs files which can be seen here http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/access-log-collection.html#access-log-entry-format. There are total of 17 extra fields added to these which are:
+Values in columns can be set to any of the values in logs files which can be seen here http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/access-log-collection.html#access-log-entry-format. There are total of 18 extra fields added to these which are:
 
 - `count`
 - `total_time`
@@ -86,6 +87,7 @@ Values in columns can be set to any of the values in logs files which can be see
 - `requested_resource.searchParams`
 - `requested_resource.username`
 - `requested_resource.password`
+- `method`
 
 When `count` is specified, it serves as a **groupBy** method that counts values in the other column and groups them together. Note that column1 is `count` by default.
 
@@ -96,6 +98,8 @@ When `count` is specified, it serves as a **groupBy** method that counts values 
 `client` is the client IP. ELB provides IP and ports as pairs. This field added to filter by only IP instead of the pair.
 
 `backend` is the backend IP. ELB provides IP and ports as pairs. This field added to filter by only IP instead of the pair.
+
+`method` is the HTTP method e.g. `GET`, `POST` and so on.
 
 Columns can be changed like this:
 
