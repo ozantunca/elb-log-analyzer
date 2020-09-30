@@ -46,7 +46,7 @@ export function generateProcessor({
   const indexOfCountColumn = requestedColumns.indexOf('count')
 
   if (indexOfCountColumn > -1) {
-    const counts: { [key: string]: number } = {}
+    const counts: Record<string, number> = {}
     const tempCols = requestedColumns.slice(0)
 
     tempCols.splice(indexOfCountColumn, 1)
