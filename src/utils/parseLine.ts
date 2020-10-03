@@ -36,7 +36,7 @@ export function parseLine(line: string): ParsedLine | undefined {
     'searchParams',
     'hash',
   ] as (keyof URL)[]).forEach((key: keyof URL) => {
-    parsedURLWithCorrectKeys[`requested_resource.${key}`] = parsedURL[key] || '[empty]'
+    parsedURLWithCorrectKeys[`requested_resource.${key}`] = parsedURL[key] || '[invalid URL]'
   })
 
   const parsedLine: ParsedLine = {
