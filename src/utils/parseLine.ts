@@ -16,8 +16,11 @@ export function parseLine(line: string): ParsedLine | undefined {
 
   const requestField = String(ATTRIBUTES[11])
   const [method, requestedResource] = requestField.split(' ')
-  const parsedURL = new URL(requestedResource)
-  const parsedURLWithCorrectKeys: { [key: string]: any } = {}
+  let parsedURL: URL | Record<string, unknown> = {}
+  try {
+    parsedURL = new URL(requestedResource)
+  } catch (err) {}
+  const parsedURLWithCorrectKeys: Record<string, any> = {}
 
   ;([
     'host',
@@ -33,7 +36,7 @@ export function parseLine(line: string): ParsedLine | undefined {
     'searchParams',
     'hash',
   ] as (keyof URL)[]).forEach((key: keyof URL) => {
-    parsedURLWithCorrectKeys[`requested_resource.${key}`] = parsedURL[key]
+    parsedURLWithCorrectKeys[`requested_resource.${key}`] = parsedURL[key] || '[invalid URL]'
   })
 
   const parsedLine: ParsedLine = {

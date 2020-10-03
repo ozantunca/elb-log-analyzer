@@ -15,7 +15,8 @@
     "no-unused-vars": "off",
     "space-before-function-paren": "off",
     "comma-dangle": "off",
-    "camelcase": "off"
+    "camelcase": "off",
+    "no-use-before-define": "off"
   },
   "root": true
 }
