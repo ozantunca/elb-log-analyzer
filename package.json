@@ -68,5 +68,8 @@
   "jest": {
     "preset": "ts-jest",
     "rootDir": "test"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
