@@ -32,8 +32,8 @@
   "scripts": {
     "test": "npm run lint && npm run build && jest",
     "build": "tsc -p tsconfig.json",
-    "lint": "eslint ./src/**/*",
-    "lint:fix": "eslint ./src/**/* --fix",
+    "lint": "eslint ./src/**/*.ts",
+    "lint:fix": "eslint ./src/**/*.ts --fix",
     "publish": "semantic-release"
   },
   "readmeFilename": "README.md",
