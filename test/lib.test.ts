@@ -628,4 +628,17 @@ describe('library mode', function () {
       done()
     })
   })
+
+  it('should reject when requesting non-existent columns', function (done) {
+    analyzer({
+      files: ['logs'],
+      cols: ['count', 'nonexistent'] as any,
+    }).catch(function (err) {
+      expect(err).toBeInstanceOf(Error)
+      expect(err.message).toBe(
+        'One or more of the requested columns does not exist.'
+      )
+      done()
+    })
+  })
 })
