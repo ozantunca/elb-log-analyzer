@@ -569,6 +569,33 @@ describe('library mode', function () {
     })
   })
 
+  it('prefixing without count', function (done) {
+    var result = [
+      ['2015-11-07T18:45:37.708556Z', 'http://www.example.com:80/favicon.ico'],
+      ['2015-11-07T18:45:37.708556Z', 'http://www.example.com:80/favicon.ico'],
+      ['2015-11-07T18:45:37.708556Z', 'http://www.example.com:80/favicon.ico'],
+      ['2015-11-07T18:45:37.702677Z', 'http://example.com:80/favicons/apple-touch-icon-180x180.png'],
+      ['2015-11-07T18:45:37.702677Z', 'http://example.com:80/favicons/apple-touch-icon-180x180.png'],
+      ['2015-11-07T18:45:37.702677Z', 'http://example.com:80/favicons/apple-touch-icon-180x180.png'],
+      ['2015-11-07T18:45:37.696454Z', 'http://example.com:80/images/logo/google-play.png'],
+      ['2015-11-07T18:45:37.696454Z', 'http://example.com:80/images/logo/google-play.png'],
+      ['2015-11-07T18:45:37.696454Z', 'http://example.com:80/images/logo/google-play.png'],
+      ['2015-11-07T18:45:37.691548Z', 'http://example.com:80/?mode=json&after=&iteration=1'],
+    ]
+
+    analyzer({
+      files: ['logs'],
+      cols: ['timestamp', 'requested_resource'],
+      prefixes: ['', 'http'],
+    }).then(function (logs) {
+      logs.forEach(function (log, i) {
+        expect(result[i][0]).toBe(log[0])
+        expect(result[i][1]).toBe(log[1])
+      })
+      done()
+    })
+  })
+
   it('should parse application ELB logs as well', function (done) {
     var result = [
       [219, 'http'],

@@ -128,7 +128,7 @@ export function generateProcessor({
           return
         }
 
-        if (filterFunc && !filterFunc(lineObj)) {
+        if (filterFunc && !filterFunc(mappedLine)) {
           return
         }
 
