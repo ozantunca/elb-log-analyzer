@@ -39,4 +39,4 @@ const AVAILABLE_COLUMNS = [
 ]
 
 export const validateColumns = (columns: string[]): boolean =>
-  columns.some((column) => AVAILABLE_COLUMNS.indexOf(column) > -1)
+  columns.every((column) => AVAILABLE_COLUMNS.indexOf(column) > -1)
