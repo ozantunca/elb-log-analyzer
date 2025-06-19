@@ -4,7 +4,7 @@
 [![Travis](https://travis-ci.org/ozantunca/elb-log-analyzer.svg?branch=master)](https://travis-ci.org/ozantunca/elb-log-analyzer)
 [![Snyk](https://snyk.io/test/npm/elb-log-analyzer/badge.svg)](https://snyk.io/test/npm/elb-log-analyzer)
 
-ELB log analyzer is a command line tool for parsing Elastic Load Balancer's access logs and getting quick statistics. Useful for detecting requests taking longest time, IPs making most requests and many other data that can be derived from log files. If you need help bulk downloading logs from your S3 bucket, try [elblogs](https://github.com/namirali/elblogs).
+ELB log analyzer is a command line tool for parsing Elastic Load Balancer's access logs and getting quick statistics. Useful for detecting requests taking longest time, IPs making most requests and many other data that can be derived from log files. Supports both grouped and ungrouped log formats. If you need help bulk downloading logs from your S3 bucket, try [elblogs](https://github.com/namirali/elblogs).
 
 <a href="https://www.buymeacoffee.com/7U6J1fT" target="_blank"><img src="https://bmc-cdn.nyc3.digitaloceanspaces.com/BMC-button-images/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a> If you like using the tool, consider buying me a coffee ☕️
 
