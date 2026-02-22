@@ -24,7 +24,7 @@
   "preferGlobal": true,
   "dependencies": {
     "colors": "^1.4.0",
-    "glob": "^8.0.3",
+    "glob": "^13.0.6",
     "lodash": "^4.17.21",
     "optimist": "^0.6.1",
     "progress": "^2.0.3"

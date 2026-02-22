@@ -1,7 +1,5 @@
-import { promisify } from 'util'
+import { glob } from 'glob'
 import flatten from 'lodash/flatten'
-
-const glob: Function = promisify(require('glob'))
 
 export const collectFileNames = async (files: string[]): Promise<string[]> =>
   Promise.all(
