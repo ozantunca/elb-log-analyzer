@@ -61,6 +61,17 @@ export interface ParsedLine {
   ssl_protocol: string
   target_group_arn: string
   trace_id: string
+  domain_name?: string
+  chosen_cert_arn?: string
+  matched_rule_priority?: string
+  request_creation_time?: string
+  actions_executed?: string
+  redirect_url?: string
+  error_reason?: string
+  target_port_list?: string
+  target_status_code_list?: string
+  classification?: string
+  classification_reason?: string
   type?: string
   count?: number
 }
