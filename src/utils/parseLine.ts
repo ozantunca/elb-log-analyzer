@@ -2,6 +2,14 @@ import { URL } from 'url'
 
 import { ParsedLine } from '../types/library'
 
+function safeDecodeURI(s: string): string {
+  try {
+    return decodeURI(s)
+  } catch {
+    return s
+  }
+}
+
 export function parseLine(line: string): ParsedLine | undefined {
   const ATTRIBUTES = line.match(/[^\s"']+|"([^"]*)"/gi)
   if (!ATTRIBUTES) {
@@ -36,7 +44,11 @@ export function parseLine(line: string): ParsedLine | undefined {
     'searchParams',
     'hash',
   ] as (keyof URL)[]).forEach((key: keyof URL) => {
-    parsedURLWithCorrectKeys[`requested_resource.${key}`] = parsedURL[key] || '[invalid URL]'
+    const value = parsedURL[key] || '[invalid URL]'
+    parsedURLWithCorrectKeys[`requested_resource.${key}`] =
+      ['path', 'pathname'].includes(key) && typeof value === 'string'
+        ? safeDecodeURI(value)
+        : value
   })
 
   const parsedLine: ParsedLine = {
@@ -53,9 +65,9 @@ export function parseLine(line: string): ParsedLine | undefined {
     backend_status_code: ATTRIBUTES[8],
     received_bytes: ATTRIBUTES[9],
     sent_bytes: ATTRIBUTES[10],
-    request: requestField,
+    request: safeDecodeURI(requestField),
     method: method.substring(1),
-    requested_resource: requestedResource,
+    requested_resource: safeDecodeURI(requestedResource),
     user_agent: ATTRIBUTES[12],
     total_time: Number(ATTRIBUTES[4]) + Number(ATTRIBUTES[5]) + Number(ATTRIBUTES[6]),
     ssl_cipher: ATTRIBUTES[13],

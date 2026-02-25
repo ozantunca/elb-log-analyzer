@@ -683,4 +683,22 @@ describe('library mode', function () {
       done()
     })
   })
+
+  it('should decode URL-encoded request and requested_resource for human readability (issue #196)', function (done) {
+    analyzer({
+      files: ['test/fixtures/UrlEncodedPath.log'],
+      cols: ['count', 'request', 'requested_resource', 'requested_resource.pathname'],
+    }).then(function (logs) {
+      expect(logs.length).toBe(1)
+      expect(logs[0][0]).toBe(1)
+      // request: full "METHOD url HTTP/1.1" should be decoded
+      expect(logs[0][1]).toContain('Ulysses Guimarães - lado par')
+      expect(logs[0][1]).not.toContain('%20')
+      // requested_resource: URL should be decoded
+      expect(logs[0][2]).toBe('https://example.com:443/Ulysses Guimarães - lado par')
+      // requested_resource.pathname: path component should be decoded
+      expect(logs[0][3]).toBe('/Ulysses Guimarães - lado par')
+      done()
+    })
+  })
 })
