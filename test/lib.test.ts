@@ -668,4 +668,19 @@ describe('library mode', function () {
       done()
     })
   })
+
+  it('should parse ALB logs with extended format (domain_name, chosen_cert_arn, etc.)', function (done) {
+    analyzer({
+      files: ['test/fixtures/AppELBLogWithNewFields.log'],
+      cols: ['count', 'domain_name', 'matched_rule_priority', 'actions_executed'],
+    }).then(function (logs) {
+      expect(logs.length).toBe(1)
+      expect(logs[0][0]).toBe(1)
+      // Quoted fields retain quotes from log format
+      expect(logs[0][1]).toMatch(/example\.com/)
+      expect(logs[0][2]).toBe('1')
+      expect(logs[0][3]).toMatch(/forward/)
+      done()
+    })
+  })
 })
